@@ -29,11 +29,18 @@ resource "aws_amplify_app" "et_ai_poc_portal" {
   # EOT
 
   # The default rewrites and redirects added by the Amplify Console.
+  # custom_rule {
+  #   source = "/<*>"
+  #   status = "404"
+  #   target = "/index.html"
+  # }
+  # Normalize /index.html to /
   custom_rule {
-    source = "/<*>"
-    status = "404"
-    target = "/index.html"
+    source = "/index.html"
+    target = "/"
+    status = "301"
   }
+
 
   #   environment_variables = {
   #     Name           = "hello-world"
