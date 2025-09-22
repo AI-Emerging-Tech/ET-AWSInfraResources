@@ -14,6 +14,30 @@ output "amplify_default_domain" {
 output "amplify_branch_url" {
   value = "https://${aws_amplify_branch.amplify_branch.branch_name}.${aws_amplify_app.et_ai_poc_portal.default_domain}"
 }
+
+# output "auth_secret_arn" {
+#   value = aws_secretsmanager_secret.auth_secret.arn
+# }
+
+output "authorizer_function_name" {
+  description = "Name of the API Gateway authorizer Lambda function."
+  value       = aws_lambda_function.api_gateway_authorizer.function_name
+}
+
+output "authorizer_function_arn" {
+  description = "ARN of the API Gateway authorizer Lambda function."
+  value       = aws_lambda_function.api_gateway_authorizer.arn
+}
+
+output "authorizer_invoke_arn" {
+  description = "Invoke ARN of the API Gateway authorizer Lambda function."
+  value       = aws_lambda_function.api_gateway_authorizer.invoke_arn
+}
+
+output "authorizer_version" {
+  description = "Published version of the authorizer Lambda (set because publish=true)."
+  value       = aws_lambda_function.api_gateway_authorizer.version
+}
 # output "custom_domain_url" {
 #   value = "https://${aws_amplify_branch.amplify_branch.branch_name}.${var.domain_name}"
 # }
