@@ -1,6 +1,12 @@
+# output "api-gateway-url" {
+#   value = "${aws_api_gateway_stage.example.invoke_url}${aws_api_gateway_resource.Resource.path}"
+#   # value = aws_api_gateway_deployment.example.invoke_url
+# }
 output "api-gateway-url" {
-  value = "${aws_api_gateway_stage.example.invoke_url}${aws_api_gateway_resource.Resource.path}"
-  # value = aws_api_gateway_deployment.example.invoke_url
+  value = "${aws_api_gateway_stage.v1.invoke_url}${aws_api_gateway_resource.Resource.path}"
+}
+output "api-gateway-base-url" {
+  value = aws_api_gateway_stage.v1.invoke_url
 }
 
 output "amplify_app_id" {
