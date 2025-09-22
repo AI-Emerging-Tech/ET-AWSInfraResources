@@ -84,11 +84,11 @@ variable "aws_dynamodb_table" {
   default     = "users"
 }
 
-variable "az_client" {
+variable "az_client_id" {
   description = "azure clien id secret"
 }
 
-variable "az_tenant" {
+variable "az_tenant_id" {
   description = "azure tenant id secret"
 }
 
