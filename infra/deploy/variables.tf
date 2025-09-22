@@ -40,17 +40,17 @@ variable "django_secret_key" {
   description = "Secret key for Django"
 }
 
-variable "AWS_REGION" {
-  default   = "us-east-1"
-  type      = string
-  sensitive = true
-}
+# variable "AWS_REGION" {
+#   default   = "us-east-1"
+#   type      = string
+#   sensitive = true
+# }
 
-variable "AWS_ACCOUNT_ID" {
-  default   = "Your aws account number"
-  type      = string
-  sensitive = true
-}
+# variable "AWS_ACCOUNT_ID" {
+#   default   = "Your aws account number"
+#   type      = string
+#   sensitive = true
+# }
 
 variable "cd_github_access_token" {
   description = "The details of the github token"
@@ -72,6 +72,24 @@ variable "ui_branch_name" {
   type        = string
   description = "AWS Amplify App Repo Branch Name"
   default     = "main"
+}
+
+
+variable "auth_secret" {
+  description = "Auth secret for JWT decprition"
+}
+
+variable "aws_dynamodb_table" {
+  description = "lambda authorizer user table"
+  default     = "users"
+}
+
+variable "az_client" {
+  description = "azure clien id secret"
+}
+
+variable "az_tenant" {
+  description = "azure tenant id secret"
 }
 
 # variable "domain_name" {
