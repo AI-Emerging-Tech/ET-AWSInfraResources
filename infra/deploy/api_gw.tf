@@ -278,12 +278,12 @@ resource "aws_api_gateway_deployment" "current" {
     aws_api_gateway_method.Method,
     # aws_api_gateway_integration.proxy_any,
     # aws_api_gateway_integration.auth_post,
-    aws_api_gateway_integration_response.options_200,
+    # aws_api_gateway_integration_response.options_200,
   ]
   rest_api_id = aws_api_gateway_rest_api.API.id
 
   # force a redeploy on changes
-  triggers = { redeploy = timestamp() }
+  # triggers = { redeploy = timestamp() }
 }
 
 resource "aws_api_gateway_stage" "v1" {
