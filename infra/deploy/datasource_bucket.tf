@@ -1,6 +1,16 @@
-resource "aws_s3_bucket" "data_source" {
-  bucket = "data-source-${aws_s3_bucket.current.id}"
+# datasource_bucket.tf
+
+resource "random_id" "s3_suffix" {
+  byte_length = 4
 }
+
+resource "aws_s3_bucket" "data_source" {
+  bucket = "data-source-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.id}-${random_id.s3_suffix.hex}"
+  tags = {
+    Name = "${local.prefix}-data-source"
+  }
+}
+
 
 resource "aws_vpc_endpoint" "s3_gateway" {
   vpc_id       = aws_vpc.main.id
@@ -23,6 +33,14 @@ resource "aws_vpc_endpoint" "s3_gateway" {
   ]
 }
 POLICY
+}
+
+resource "aws_s3_bucket_public_access_block" "data_source" {
+  bucket                  = aws_s3_bucket.data_source.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
 }
 
 resource "aws_vpc_endpoint" "s3_interface" {

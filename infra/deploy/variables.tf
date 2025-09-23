@@ -101,6 +101,12 @@ variable "az_tenant_id" {
 #   type = string
 # }
 
+variable "datasource_bucket_name" {
+  description = "Optional explicit S3 bucket name. Leave blank to auto-generate."
+  type        = string
+  default     = ""
+}
+
 variable "elasticsearch_private_https_endpoint" {
   type = string
 }
