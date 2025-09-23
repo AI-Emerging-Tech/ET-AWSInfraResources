@@ -25,9 +25,16 @@ module "lambda_function_container_image" {
     ELASTICSEARCH_PASSWORD = local.elastic_credentials.password
   }
 
-  vpc_subnet_ids         = var.vpc_subnet_ids
-  vpc_security_group_ids = var.vpc_security_group_ids
-  attach_network_policy  = true
+  vpc_subnet_ids = [aws_subnet.private_a.id, aws_subnet.private_b.id]
+
+  vpc_security_group_ids = [
+    aws_security_group.endpoint_access.id
+  ]
+
+
+
+
+  attach_network_policy = true
 
   memory_size = 1024
 

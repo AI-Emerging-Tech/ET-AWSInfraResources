@@ -108,7 +108,7 @@ resource "aws_lambda_permission" "apigw-lambda" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.lambda_function.function_name
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_api_gateway_rest_api.API.execution_arn}/*/${aws_api_gateway_method.Method.http_method}${aws_api_gateway_resource.Resource.path}"
+  source_arn    = "${aws_api_gateway_rest_api.API.execution_arn}/*/${aws_api_gateway_method.Method.http_method}${aws_api_gateway_resource.agent.path}"
   depends_on    = [aws_api_gateway_integration.Integration]
 }
 
@@ -135,13 +135,13 @@ resource "aws_api_gateway_integration" "agent_post" {
   http_method             = aws_api_gateway_method.agent_post.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = var.lambda_agent_function_arn
+  uri                     = "${aws_api_gateway_rest_api.API.execution_arn}/*/${aws_api_gateway_method.agent_post.http_method}${aws_api_gateway_resource.Resource.path}"
 }
 
 resource "aws_lambda_permission" "allow_apigw_invoke_agent" {
   statement_id  = "AllowExecutionFromAPIGatewayAgent"
   action        = "lambda:InvokeFunction"
-  function_name = var.lambda_agent_function_name
+  function_name = aws_lambda_function.lambda_function.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.API.execution_arn}/*/POST/agent"
   depends_on    = [aws_api_gateway_integration.agent_post]
