@@ -13,7 +13,7 @@ data "aws_iam_policy_document" "authorizer_ddb" {
       "dynamodb:Query"
     ]
     resources = [
-      "arn:${data.aws_partition.current.partition}:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.aws_dynamodb_table}"
+      "arn:${data.aws_partition.current.partition}:dynamodb:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:table/${var.aws_dynamodb_table}"
     ]
   }
 }
