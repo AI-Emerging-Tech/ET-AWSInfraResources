@@ -453,7 +453,7 @@ data "aws_iam_policy_document" "amplify_min" {
       "amplify:ListTagsForResource"
     ]
     resources = [
-      "arn:aws:amplify:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:apps/*"
+      "arn:aws:amplify:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:apps/*"
     ]
   }
 
@@ -492,10 +492,10 @@ data "aws_iam_policy_document" "amplify_min" {
       "amplify:ListTagsForResource"
     ]
     resources = [
-      "arn:aws:amplify:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:apps/*/branches/*",
-      "arn:aws:amplify:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:apps/*/domains/*",
-      "arn:aws:amplify:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:apps/*/branches/*/jobs/*",
-      "arn:aws:amplify:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:webhooks/*"
+      "arn:aws:amplify:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:apps/*/branches/*",
+      "arn:aws:amplify:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:apps/*/domains/*",
+      "arn:aws:amplify:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:apps/*/branches/*/jobs/*",
+      "arn:aws:amplify:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:webhooks/*"
     ]
   }
 

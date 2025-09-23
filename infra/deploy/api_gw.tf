@@ -13,6 +13,7 @@ resource "aws_api_gateway_rest_api" "API" {
 # Resource tree
 # /
 #   /verify-json         (CUSTOM authorizer)
+#   /agent               (public POST)  <-- NEW
 #   /api
 #     /v1
 #       /admin
@@ -25,6 +26,12 @@ resource "aws_api_gateway_resource" "Resource" {
   rest_api_id = aws_api_gateway_rest_api.API.id
   parent_id   = aws_api_gateway_rest_api.API.root_resource_id
   path_part   = "verify-json"
+}
+
+resource "aws_api_gateway_resource" "agent" {
+  rest_api_id = aws_api_gateway_rest_api.API.id
+  parent_id   = aws_api_gateway_rest_api.API.root_resource_id
+  path_part   = "agent"
 }
 
 resource "aws_api_gateway_resource" "api" {
@@ -67,11 +74,12 @@ resource "aws_api_gateway_resource" "auth" {
 # Authorizer (TOKEN)
 ############################
 resource "aws_api_gateway_authorizer" "auth" {
-  name                             = "AuthToken"
-  rest_api_id                      = aws_api_gateway_rest_api.API.id
-  type                             = "TOKEN"
-  identity_source                  = "method.request.header.Authorization"
-  authorizer_uri                   = "arn:${data.aws_partition.current.partition}:apigateway:${data.aws_region.current.name}:lambda:path/2015-03-31/functions/${aws_lambda_function.api_gateway_authorizer.arn}/invocations"
+  name            = "AuthToken"
+  rest_api_id     = aws_api_gateway_rest_api.API.id
+  type            = "TOKEN"
+  identity_source = "method.request.header.Authorization"
+  authorizer_uri  = "arn:aws:lambda:us-east-1:061051228043:function:api-gateway-authorizer"
+  # authorizer_uri                   = "arn:${data.aws_partition.current.partition}:apigateway:${data.aws_region.current.id}:lambda:path/2015-03-31/functions/${aws_lambda_function.api_gateway_authorizer.arn}/invocations"
   authorizer_result_ttl_in_seconds = 300
 }
 
@@ -92,26 +100,57 @@ resource "aws_api_gateway_integration" "Integration" {
   http_method             = aws_api_gateway_method.Method.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-
-  uri = aws_lambda_function.lambda_function.invoke_arn
+  uri                     = aws_lambda_function.lambda_function.invoke_arn
 }
-
 
 resource "aws_lambda_permission" "apigw-lambda" {
   statement_id  = "AllowExecutionFromAPIGatewayVerifyJson"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.lambda_function.function_name
   principal     = "apigateway.amazonaws.com"
-  # allow any stage, specific method/path
-  source_arn = "${aws_api_gateway_rest_api.API.execution_arn}/*/${aws_api_gateway_method.Method.http_method}${aws_api_gateway_resource.Resource.path}"
-
-  depends_on = [aws_api_gateway_integration.Integration]
+  source_arn    = "${aws_api_gateway_rest_api.API.execution_arn}/*/${aws_api_gateway_method.Method.http_method}${aws_api_gateway_resource.Resource.path}"
+  depends_on    = [aws_api_gateway_integration.Integration]
 }
 
 resource "aws_api_gateway_method_response" "response_200" {
   rest_api_id = aws_api_gateway_rest_api.API.id
   resource_id = aws_api_gateway_resource.Resource.id
   http_method = aws_api_gateway_method.Method.http_method
+  status_code = "200"
+}
+
+############################
+# /agent (POST, NO auth) – mirrors your HTTP API route
+############################
+resource "aws_api_gateway_method" "agent_post" {
+  rest_api_id   = aws_api_gateway_rest_api.API.id
+  resource_id   = aws_api_gateway_resource.agent.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "agent_post" {
+  rest_api_id             = aws_api_gateway_rest_api.API.id
+  resource_id             = aws_api_gateway_resource.agent.id
+  http_method             = aws_api_gateway_method.agent_post.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = var.lambda_agent_function_arn
+}
+
+resource "aws_lambda_permission" "allow_apigw_invoke_agent" {
+  statement_id  = "AllowExecutionFromAPIGatewayAgent"
+  action        = "lambda:InvokeFunction"
+  function_name = var.lambda_agent_function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.API.execution_arn}/*/POST/agent"
+  depends_on    = [aws_api_gateway_integration.agent_post]
+}
+
+resource "aws_api_gateway_method_response" "agent_200" {
+  rest_api_id = aws_api_gateway_rest_api.API.id
+  resource_id = aws_api_gateway_resource.agent.id
+  http_method = aws_api_gateway_method.agent_post.http_method
   status_code = "200"
 }
 
@@ -173,7 +212,7 @@ resource "aws_lambda_permission" "allow_apigw_invoke_auth" {
 }
 
 ############################
-# CORS (OPTIONS) for /, /api, /api/v1, /api/v1/admin, /api/v1/admin/users, /auth
+# CORS (OPTIONS) for multiple resources (includes /agent)
 ############################
 locals {
   cors_resources = {
@@ -183,6 +222,7 @@ locals {
     admin = aws_api_gateway_resource.admin.id
     users = aws_api_gateway_resource.users.id
     auth  = aws_api_gateway_resource.auth.id
+    agent = aws_api_gateway_resource.agent.id
   }
 }
 
@@ -241,11 +281,12 @@ resource "aws_api_gateway_deployment" "current" {
     aws_api_gateway_integration.Integration,          # /verify-json
     aws_api_gateway_integration.proxy_any,            # /api/v1/{proxy+}
     aws_api_gateway_integration.auth_post,            # /auth POST
+    aws_api_gateway_integration.agent_post,           # /agent POST
     aws_api_gateway_integration.options,              # CORS MOCKs
     aws_api_gateway_integration_response.options_200, # CORS responses
   ]
 
-  # Optional redeploy trigger
+  # Optional auto-redeploy trigger on changes to key resources
   # triggers = { redeploy = timestamp() }
 }
 

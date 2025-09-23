@@ -21,6 +21,7 @@ output "amplify_branch_url" {
   value = "https://${aws_amplify_branch.amplify_branch.branch_name}.${aws_amplify_app.et_ai_poc_portal.default_domain}"
 }
 
+
 # output "auth_secret_arn" {
 #   value = aws_secretsmanager_secret.auth_secret.arn
 # }
@@ -43,6 +44,33 @@ output "authorizer_invoke_arn" {
 output "authorizer_version" {
   description = "Published version of the authorizer Lambda (set because publish=true)."
   value       = aws_lambda_function.api_gateway_authorizer.version
+}
+
+# rag pipeline outputs
+output "api_gw_base_url" {
+  description = "Base invoke URL for the stage"
+  value       = aws_api_gateway_stage.v1.invoke_url
+}
+
+output "api_gw_agent_url" {
+  description = "POST /agent full URL"
+  value       = "${aws_api_gateway_stage.v1.invoke_url}agent"
+}
+
+output "bucket_name" {
+  value = aws_s3_bucket.data_source.bucket
+}
+
+output "bucket_arn" {
+  value = aws_s3_bucket.data_source.arn
+}
+
+output "function_arn" {
+  value = module.lambda_function_container_image.lambda_function_arn
+}
+
+output "function_name" {
+  value = module.lambda_function_container_image.lambda_function_name
 }
 # output "custom_domain_url" {
 #   value = "https://${aws_amplify_branch.amplify_branch.branch_name}.${var.domain_name}"

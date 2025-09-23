@@ -92,6 +92,46 @@ variable "az_tenant_id" {
   description = "azure tenant id secret"
 }
 
+# rag pipleline variables setup
+variable "lambda_agent_function_name" {
+  type = string
+}
+
+variable "lambda_agent_function_arn" {
+  type = string
+}
+
+variable "deployment_id" {
+  type = string
+}
+
+variable "vpc_id" {
+  type = string
+}
+
+variable "route_table_ids" {
+  type = list(string)
+}
+
+variable "security_group_ids" {
+  type = list(string)
+}
+
+variable "elasticsearch_private_https_endpoint" {
+  type = string
+}
+
+variable "elasticsearch_connection_secret" {
+  type = string
+}
+
+variable "vpc_subnet_ids" {
+  type = list(string)
+}
+
+variable "vpc_security_group_ids" {
+  type = list(string)
+}
 # variable "domain_name" {
 #   type        = string
 #   default     = "amplifyapp.com" #change this to your custom domain
