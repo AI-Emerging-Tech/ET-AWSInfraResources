@@ -6,3 +6,4 @@ resource "aws_lambda_function" "lambda_function" {
   runtime       = "python3.9"
 }
 
+
