@@ -21,3 +21,5 @@ services:
       - TF_VAR_ecr_app_image=${TF_VAR_ecr_app_image}
       - TF_VAR_ecr_tools_image=${TF_VAR_ecr_tools_image}
       - TF_VAR_cd_github_access_token=${TF_VAR_cd_github_access_token}
+      - TF_VAR_elasticsearch_connection_secret=${TF_VAR_elasticsearch_connection_secret}
+      - TF_VAR_elasticsearch_private_https_endpoint=${TF_VAR_elasticsearch_private_https_endpoint}
