@@ -60,7 +60,10 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           TF_VAR_DB_PASSWORD: ${{ secrets.TF_VAR_DB_PASSWORD }}
-          
+          TF_VAR_az_client_id: ${{ secrets.TF_VAR_az_client_id }}
+          TF_VAR_az_tenant_id: ${{ secrets.TF_VAR_az_tenant_id }}
+          TF_VAR_users_table: ${{ vars.TF_VAR_users_table}}
+          TF_VAR_auth_secret: ${{ secrets.TF_VAR_auth_secret }}
           TF_VAR_cd_github_access_token:  ${{ secrets.TF_VAR_CD_GITHUB_ACCESS_TOKEN }}
           TF_VAR_DJANGO_SECRET_KEY: ${{ secrets.TF_VAR_DJANGO_SECRET_KEY }}
           TF_VAR_elasticsearch_connection_secret: ${{ secrets.TF_VAR_elasticsearch_connection_secret }}

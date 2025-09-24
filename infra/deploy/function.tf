@@ -1,15 +1,15 @@
 
-data "aws_secretsmanager_secret" "elastic_credentials" {
-  name = var.elasticsearch_connection_secret
-}
+# resource "aws_secretsmanager_secret" "elastic_credentials" {
+#   name = var.elasticsearch_connection_secret
+# }
 
-data "aws_secretsmanager_secret_version" "elastic_credentials" {
-  secret_id = data.aws_secretsmanager_secret.elastic_credentials.id
-}
+# resource "aws_secretsmanager_secret_version" "elastic_credentials" {
+#   secret_id = data.aws_secretsmanager_secret.elastic_credentials.id
+# }
 
-locals {
-  elastic_credentials = jsondecode(data.aws_secretsmanager_secret_version.elastic_credentials.secret_string)
-}
+# locals {
+#   elastic_credentials = jsondecode(data.aws_secretsmanager_secret_version.elastic_credentials.secret_string)
+# }
 
 module "lambda_function_container_image" {
   source         = "terraform-aws-modules/lambda/aws"
@@ -21,8 +21,8 @@ module "lambda_function_container_image" {
 
   environment_variables = {
     ELASTICSEARCH_ENDPOINT = var.elasticsearch_private_https_endpoint
-    ELASTICSEARCH_USER     = local.elastic_credentials.username
-    ELASTICSEARCH_PASSWORD = local.elastic_credentials.password
+    # ELASTICSEARCH_USER     = local.elastic_credentials.username
+    ELASTICSEARCH_PASSWORD = var.elasticsearch_connection_secret
   }
 
   vpc_subnet_ids = [aws_subnet.private_a.id, aws_subnet.private_b.id]
