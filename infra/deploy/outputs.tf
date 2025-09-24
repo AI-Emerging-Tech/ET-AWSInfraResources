@@ -65,13 +65,13 @@ output "bucket_arn" {
   value = aws_s3_bucket.data_source.arn
 }
 
-output "function_arn" {
-  value = module.lambda_function_container_image.lambda_function_arn
-}
+# output "function_arn" {
+#   value = module.lambda_function_container_image.lambda_function_arn
+# }
 
-output "function_name" {
-  value = module.lambda_function_container_image.lambda_function_name
-}
+# output "function_name" {
+#   value = module.lambda_function_container_image.lambda_function_name
+# }
 # output "custom_domain_url" {
 #   value = "https://${aws_amplify_branch.amplify_branch.branch_name}.${var.domain_name}"
 # }

@@ -281,6 +281,7 @@ data "aws_iam_policy_document" "aws_s3_bucket" {
       "s3:PutBucketPolicy",
       "s3:GetBucketVersioning",
       "s3:PutBucketVersioning",
+      "s3:GetBucketAcl",
 
       # encryption + access block + ownership controls
       "s3:GetEncryptionConfiguration",
