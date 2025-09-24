@@ -21,7 +21,7 @@ module "lambda_function_container_image" {
 
   environment_variables = {
     ELASTICSEARCH_ENDPOINT = var.elasticsearch_private_https_endpoint
-    ELASTICSEARCH_USER     = local.elastic_credentials.username
+    # ELASTICSEARCH_USER     = local.elastic_credentials.username
     ELASTICSEARCH_PASSWORD = var.elasticsearch_connection_secret
   }
 
