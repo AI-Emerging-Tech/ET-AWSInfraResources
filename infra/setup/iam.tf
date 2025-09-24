@@ -268,9 +268,10 @@ data "aws_iam_policy_document" "aws_s3_bucket" {
     sid    = "S3BucketAdminForDeploy"
     effect = "Allow"
     actions = [
-      "s3:CreateBucket",
+      "s3:*",
       "s3:DeleteBucket",
       "s3:ListAllMyBuckets",
+
 
       # bucket reads/writes Terraform does during create/read
       "s3:GetBucketLocation",
