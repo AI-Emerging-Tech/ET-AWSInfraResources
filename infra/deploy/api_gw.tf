@@ -100,7 +100,8 @@ resource "aws_api_gateway_integration" "Integration" {
   http_method             = aws_api_gateway_method.Method.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.lambda_function.invoke_arn
+  # uri                     = aws_lambda_function.lambda_function.invoke_arn
+  uri = "arn:aws:apigateway:${data.aws_region.current.id}:lambda:path/2015-03-31/functions/${aws_lambda_function.lambda_function.arn}/invocations"
 }
 
 resource "aws_lambda_permission" "apigw-lambda" {
@@ -108,8 +109,9 @@ resource "aws_lambda_permission" "apigw-lambda" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.lambda_function.function_name
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_api_gateway_rest_api.API.execution_arn}/*/${aws_api_gateway_method.Method.http_method}${aws_api_gateway_resource.agent.path}"
-  depends_on    = [aws_api_gateway_integration.Integration]
+  # source_arn    = "${aws_api_gateway_rest_api.API.execution_arn}/*/${aws_api_gateway_method.Method.http_method}${aws_api_gateway_resource.agent.path}"
+  source_arn = "${aws_api_gateway_rest_api.API.execution_arn}/*/${aws_api_gateway_method.Method.http_method}${aws_api_gateway_resource.Resource.path}"
+  # depends_on    = [aws_api_gateway_integration.Integration]
 }
 
 resource "aws_api_gateway_method_response" "response_200" {
@@ -135,7 +137,8 @@ resource "aws_api_gateway_integration" "agent_post" {
   http_method             = aws_api_gateway_method.agent_post.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = "${aws_api_gateway_rest_api.API.execution_arn}/*/${aws_api_gateway_method.agent_post.http_method}${aws_api_gateway_resource.Resource.path}"
+  # uri                     = "${aws_api_gateway_rest_api.API.execution_arn}/*/${aws_api_gateway_method.agent_post.http_method}${aws_api_gateway_resource.Resource.path}"
+  uri = "arn:aws:apigateway:${data.aws_region.current.id}:lambda:path/2015-03-31/functions/${aws_lambda_function.lambda_function.arn}/invocations"
 }
 
 resource "aws_lambda_permission" "allow_apigw_invoke_agent" {
@@ -171,7 +174,8 @@ resource "aws_api_gateway_integration" "proxy_any" {
   http_method             = aws_api_gateway_method.proxy_any.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.lambda_function.invoke_arn
+  # uri                     = aws_lambda_function.lambda_function.invoke_arn
+  uri = "arn:aws:apigateway:${data.aws_region.current.id}:lambda:path/2015-03-31/functions/${aws_lambda_function.lambda_function.arn}/invocations"
 }
 
 resource "aws_lambda_permission" "allow_apigw_invoke_handler" {
