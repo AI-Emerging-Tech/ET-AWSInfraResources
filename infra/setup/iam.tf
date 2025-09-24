@@ -269,22 +269,37 @@ data "aws_iam_policy_document" "aws_s3_bucket" {
     effect = "Allow"
     actions = [
       "s3:CreateBucket",
+      "s3:DeleteBucket",
       "s3:ListAllMyBuckets",
+
+      # bucket reads/writes Terraform does during create/read
       "s3:GetBucketLocation",
+      "s3:ListBucket",
+      "s3:GetBucketTagging",
       "s3:PutBucketTagging",
+      "s3:GetBucketPolicy",
+      "s3:PutBucketPolicy",
+      "s3:GetBucketVersioning",
       "s3:PutBucketVersioning",
-      "s3:PutBucketEncryption",
-      "s3:PutBucketOwnershipControls",
-      "s3:PutBucketPublicAccessBlock"
+
+      # encryption + access block + ownership controls
+      "s3:GetEncryptionConfiguration",
+      "s3:PutEncryptionConfiguration",
+      "s3:GetBucketPublicAccessBlock",
+      "s3:PutBucketPublicAccessBlock",
+      "s3:GetBucketOwnershipControls",
+      "s3:PutBucketOwnershipControls"
     ]
     resources = ["arn:aws:s3:::*"]
   }
 
-  # (Optional) object-level access if your TF also uploads objects right away
+  # (Optional) object-level access if your TF also uploads/reads objects
   statement {
-    sid    = "S3ObjectWriteForDeploy"
+    sid    = "S3ObjectRWForDeploy"
     effect = "Allow"
     actions = [
+      "s3:GetObject",
+      "s3:GetObjectTagging",
       "s3:PutObject",
       "s3:PutObjectTagging",
       "s3:DeleteObject"
@@ -303,6 +318,7 @@ resource "aws_iam_user_policy_attachment" "aws_s3_bucket" {
   user       = aws_iam_user.cd.name
   policy_arn = aws_iam_policy.aws_s3_bucket.arn
 }
+
 
 
 
