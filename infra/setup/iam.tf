@@ -54,9 +54,9 @@ resource "aws_iam_user_policy_attachment" "tf_backend" {
   policy_arn = aws_iam_policy.tf_backend.arn
 }
 
-############################
-# Policy for Lambda Access #
-############################
+# ############################
+# # Policy for Lambda Access #
+# ############################
 
 # data "aws_iam_policy_document" "lambda" {
 #   statement {
@@ -105,86 +105,6 @@ resource "aws_iam_user_policy_attachment" "tf_backend" {
 #   policy_arn = aws_iam_policy.lambda.arn
 # }
 
-
-#########################################################
-# Policy for S3 bucket access #
-#########################################################
-
-data "aws_iam_policy_document" "aws_s3_bucket" {
-  statement {
-    sid    = "S3BucketAdminForDeploy"
-    effect = "Allow"
-    actions = [
-      "s3:CreateBucket",
-      "s3:ListAllMyBuckets",
-      "s3:GetBucketLocation",
-      "s3:PutBucketTagging",
-      "s3:PutBucketVersioning",
-      "s3:PutBucketEncryption",
-      "s3:PutBucketOwnershipControls",
-      "s3:PutBucketPublicAccessBlock"
-    ]
-    resources = ["arn:aws:s3:::*"]
-  }
-
-  # (Optional) object-level access if your TF also uploads objects right away
-  statement {
-    sid    = "S3ObjectWriteForDeploy"
-    effect = "Allow"
-    actions = [
-      "s3:PutObject",
-      "s3:PutObjectTagging",
-      "s3:DeleteObject"
-    ]
-    resources = ["arn:aws:s3:::*/*"]
-  }
-}
-
-resource "aws_iam_policy" "aws_s3_bucket" {
-  name        = "${aws_iam_user.cd.name}-aws-s3-bucket"
-  description = "Allow user to manage S3 resources."
-  policy      = data.aws_iam_policy_document.aws_s3_bucket.json
-}
-
-resource "aws_iam_user_policy_attachment" "aws_s3_bucket" {
-  user       = aws_iam_user.cd.name
-  policy_arn = aws_iam_policy.aws_s3_bucket.arn
-}
-
-
-
-###############################
-# Policy for API Gateway Access
-###############################
-
-data "aws_iam_policy_document" "apigateway" {
-  statement {
-    effect = "Allow"
-    actions = [
-      "apigateway:GET",
-      "apigateway:POST",
-      "apigateway:PUT",
-      "apigateway:DELETE",
-      "apigateway:PATCH"
-    ]
-    resources = ["*"]
-  }
-}
-
-resource "aws_iam_policy" "apigateway" {
-  name        = "${aws_iam_user.cd.name}-apigateway"
-  description = "Allow user to manage API Gateway resources."
-  policy      = data.aws_iam_policy_document.apigateway.json
-}
-
-resource "aws_iam_user_policy_attachment" "apigateway" {
-  user       = aws_iam_user.cd.name
-  policy_arn = aws_iam_policy.apigateway.arn
-}
-
-################################################
-# Policy for Lambda, EC2, ECS, RDS, ELB access #
-################################################
 data "aws_iam_policy_document" "cd_deploy" {
   statement {
     sid    = "LambdaAccess"
@@ -335,6 +255,124 @@ resource "aws_iam_policy" "cd_deploy" {
 resource "aws_iam_user_policy_attachment" "cd_deploy" {
   user       = aws_iam_user.cd.name
   policy_arn = aws_iam_policy.cd_deploy.arn
+}
+
+
+
+#########################################################
+# Policy for S3 bucket access #
+#########################################################
+
+data "aws_iam_policy_document" "aws_s3_bucket" {
+  statement {
+    sid    = "S3BucketAdminForDeploy"
+    effect = "Allow"
+    actions = [
+      "s3:CreateBucket",
+      "s3:ListAllMyBuckets",
+      "s3:GetBucketLocation",
+      "s3:PutBucketTagging",
+      "s3:PutBucketVersioning",
+      "s3:PutBucketEncryption",
+      "s3:PutBucketOwnershipControls",
+      "s3:PutBucketPublicAccessBlock"
+    ]
+    resources = ["arn:aws:s3:::*"]
+  }
+
+  # (Optional) object-level access if your TF also uploads objects right away
+  statement {
+    sid    = "S3ObjectWriteForDeploy"
+    effect = "Allow"
+    actions = [
+      "s3:PutObject",
+      "s3:PutObjectTagging",
+      "s3:DeleteObject"
+    ]
+    resources = ["arn:aws:s3:::*/*"]
+  }
+}
+
+resource "aws_iam_policy" "aws_s3_bucket" {
+  name        = "${aws_iam_user.cd.name}-aws-s3-bucket"
+  description = "Allow user to manage S3 resources."
+  policy      = data.aws_iam_policy_document.aws_s3_bucket.json
+}
+
+resource "aws_iam_user_policy_attachment" "aws_s3_bucket" {
+  user       = aws_iam_user.cd.name
+  policy_arn = aws_iam_policy.aws_s3_bucket.arn
+}
+
+
+
+###############################
+# Policy for API Gateway Access
+###############################
+
+data "aws_iam_policy_document" "apigateway" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "apigateway:GET",
+      "apigateway:POST",
+      "apigateway:PUT",
+      "apigateway:DELETE",
+      "apigateway:PATCH"
+    ]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "apigateway" {
+  name        = "${aws_iam_user.cd.name}-apigateway"
+  description = "Allow user to manage API Gateway resources."
+  policy      = data.aws_iam_policy_document.apigateway.json
+}
+
+resource "aws_iam_user_policy_attachment" "apigateway" {
+  user       = aws_iam_user.cd.name
+  policy_arn = aws_iam_policy.apigateway.arn
+}
+
+#########################
+# Policy for ECR access #
+#########################
+
+
+data "aws_iam_policy_document" "ecr" {
+  statement {
+    effect    = "Allow"
+    actions   = ["ecr:GetAuthorizationToken"]
+    resources = ["*"]
+  }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "ecr:CompleteLayerUpload",
+      "ecr:UploadLayerPart",
+      "ecr:InitiateLayerUpload",
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:PutImage"
+    ]
+    resources = [
+      aws_ecr_repository.app.arn,
+      aws_ecr_repository.proxy.arn,
+      aws_ecr_repository.tools.arn
+    ]
+  }
+}
+
+resource "aws_iam_policy" "ecr" {
+  name        = "${aws_iam_user.cd.name}-ecr"
+  description = "Allow user to manage ECR resources"
+  policy      = data.aws_iam_policy_document.ecr.json
+}
+
+resource "aws_iam_user_policy_attachment" "ecr" {
+  user       = aws_iam_user.cd.name
+  policy_arn = aws_iam_policy.ecr.arn
 }
 
 #########################
