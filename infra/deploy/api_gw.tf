@@ -78,8 +78,8 @@ resource "aws_api_gateway_authorizer" "auth" {
   rest_api_id     = aws_api_gateway_rest_api.API.id
   type            = "TOKEN"
   identity_source = "method.request.header.Authorization"
-  authorizer_uri  = "arn:aws:lambda:us-east-1:061051228043:function:api-gateway-authorizer"
-  # authorizer_uri                   = "arn:${data.aws_partition.current.partition}:apigateway:${data.aws_region.current.id}:lambda:path/2015-03-31/functions/${aws_lambda_function.api_gateway_authorizer.arn}/invocations"
+  # authorizer_uri  = "arn:aws:lambda:us-east-1:061051228043:function:api-gateway-authorizer"
+  authorizer_uri                   = "arn:${data.aws_partition.current.partition}:apigateway:${data.aws_region.current.id}:lambda:path/2015-03-31/functions/${aws_lambda_function.api_gateway_authorizer.arn}/invocations"
   authorizer_result_ttl_in_seconds = 300
 }
 
@@ -277,13 +277,26 @@ resource "aws_api_gateway_deployment" "current" {
   rest_api_id = aws_api_gateway_rest_api.API.id
 
   # Ensure ALL methods have integrations before deploying
+  # depends_on = [
+  #   aws_api_gateway_integration.Integration,          # /verify-json
+  #   aws_api_gateway_integration.proxy_any,            # /api/v1/{proxy+}
+  #   aws_api_gateway_integration.auth_post,            # /auth POST
+  #   aws_api_gateway_integration.agent_post,           # /agent POST
+  #   aws_api_gateway_integration.options,              # CORS MOCKs
+  #   aws_api_gateway_integration_response.options_200, # CORS responses
+  # ]
   depends_on = [
-    aws_api_gateway_integration.Integration,          # /verify-json
-    aws_api_gateway_integration.proxy_any,            # /api/v1/{proxy+}
-    aws_api_gateway_integration.auth_post,            # /auth POST
-    aws_api_gateway_integration.agent_post,           # /agent POST
-    aws_api_gateway_integration.options,              # CORS MOCKs
-    aws_api_gateway_integration_response.options_200, # CORS responses
+    aws_api_gateway_method.Method,
+    aws_api_gateway_integration.Integration,
+    aws_api_gateway_method.agent_post,
+    aws_api_gateway_integration.agent_post,
+    aws_api_gateway_method.auth_post,
+    aws_api_gateway_integration.auth_post,
+    aws_api_gateway_method.proxy_any,
+    aws_api_gateway_integration.proxy_any,
+    aws_api_gateway_method.options,
+    aws_api_gateway_integration.options,
+    aws_api_gateway_authorizer.auth
   ]
 
   # Optional auto-redeploy trigger on changes to key resources
