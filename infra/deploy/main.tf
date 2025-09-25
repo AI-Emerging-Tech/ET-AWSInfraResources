@@ -36,5 +36,6 @@ locals {
 }
 
 data "aws_region" "current" {}
+# Gets access to the effective Account ID in which Terraform is authorized
 data "aws_caller_identity" "current" {}
 data "aws_partition" "current" {}
