@@ -207,27 +207,27 @@ resource "aws_vpc_endpoint" "s3" {
 
 
 
-# ############################################
-# # Opensearch services access               #
-# ############################################
-# Creates a VPC endpoint
+# # ############################################
+# # # Opensearch services access               #
+# # ############################################
+# # Creates a VPC endpoint
 
 
-# Allows all outbound traffic
-resource "aws_vpc_security_group_egress_rule" "sg_egress" {
-  security_group_id = aws_security_group.endpoint_access.id
+# # Allows all outbound traffic
+# resource "aws_vpc_security_group_egress_rule" "sg_egress" {
+#   security_group_id = aws_security_group.endpoint_access.id
 
 
-  cidr_ipv4   = "0.0.0.0/0"
-  ip_protocol = "-1"
-}
+#   cidr_ipv4   = "0.0.0.0/0"
+#   ip_protocol = "-1"
+# }
 
-# Allows inbound traffic from within security group
-resource "aws_vpc_security_group_ingress_rule" "sg_ingress" {
-  security_group_id = aws_security_group.endpoint_access.id
+# # Allows inbound traffic from within security group
+# resource "aws_vpc_security_group_ingress_rule" "sg_ingress" {
+#   security_group_id = aws_security_group.endpoint_access.id
 
 
-  referenced_security_group_id = aws_security_group.endpoint_access.id
+#   referenced_security_group_id = aws_security_group.endpoint_access.id
 
-  ip_protocol = "-1"
-}
+#   ip_protocol = "-1"
+# }
