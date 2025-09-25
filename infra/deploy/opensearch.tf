@@ -66,9 +66,9 @@ resource "aws_opensearchserverless_security_policy" "network_policy" {
 }
 
 resource "aws_opensearchserverless_vpc_endpoint" "opensearch_endpoint" {
-  name             = "example-vpc-endpoint"
-  vpc_id           = aws_vpc.main.id
-  subnet_ids       = [aws_subnet.private_a.id, aws_subnet.private_b.id]
+  name               = "example-vpc-endpoint"
+  vpc_id             = aws_vpc.main.id
+  subnet_ids         = [aws_subnet.private_a.id, aws_subnet.private_b.id]
   security_group_ids = [aws_security_group.endpoint_access.id]
 }
 
