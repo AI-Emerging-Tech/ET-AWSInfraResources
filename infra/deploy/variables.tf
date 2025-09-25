@@ -116,6 +116,12 @@ variable "elasticsearch_connection_secret" {
 }
 
 
+
+variable "collection_name" {
+  description = "Name of the OpenSearch Serverless collection."
+  default     = "example-collection"
+}
+
 # variable "domain_name" {
 #   type        = string
 #   default     = "amplifyapp.com" #change this to your custom domain

@@ -64,6 +64,13 @@ output "bucket_name" {
 output "bucket_arn" {
   value = aws_s3_bucket.data_source.arn
 }
+output "collection_enpdoint" {
+  value = aws_opensearchserverless_collection.collection.collection_endpoint
+}
+
+output "dashboard_endpoint" {
+  value = aws_opensearchserverless_collection.collection.dashboard_endpoint
+}
 
 # output "function_arn" {
 #   value = module.lambda_function_container_image.lambda_function_arn
