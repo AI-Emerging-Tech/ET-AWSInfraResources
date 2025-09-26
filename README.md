@@ -219,4 +219,4 @@ Special characters !#$%&()*+,-./:;<=>?@[]^_{|}~
 ❌ No spaces allowed
 
 
-# testing 17:56 sep25
+# test deployment without open search
