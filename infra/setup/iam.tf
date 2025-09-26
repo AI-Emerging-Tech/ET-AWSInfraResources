@@ -214,7 +214,8 @@ data "aws_iam_policy_document" "cd_deploy" {
       "rds:DeleteDBInstance",
       "rds:ListTagsForResource",
       "rds:ModifyDBInstance",
-      "rds:AddTagsToResource"
+      "rds:AddTagsToResource",
+      "rds:ModifyDBSubnetGroup"
     ]
     resources = ["*"]
   }
