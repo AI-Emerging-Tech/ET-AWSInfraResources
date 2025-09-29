@@ -106,6 +106,31 @@ resource "aws_subnet" "private_b" {
 }
 
 
+#####added new
+# Private route tables (so private subnets actually use the S3 Gateway endpoint)
+resource "aws_route_table" "private_a" {
+  vpc_id = aws_vpc.main.id
+  tags   = { Name = "${local.prefix}-private-a" }
+}
+
+
+resource "aws_route_table_association" "private_a" {
+  subnet_id      = aws_subnet.private_a.id
+  route_table_id = aws_route_table.private_a.id
+}
+
+
+resource "aws_route_table" "private_b" {
+  vpc_id = aws_vpc.main.id
+  tags   = { Name = "${local.prefix}-private-b" }
+}
+
+
+resource "aws_route_table_association" "private_b" {
+  subnet_id      = aws_subnet.private_b.id
+  route_table_id = aws_route_table.private_b.id
+}
+
 # #########################################################################
 # ## Endpoints to allow ECS to access ECR, CloudWatch and Systems Manager #
 # #########################################################################
@@ -115,11 +140,21 @@ resource "aws_security_group" "endpoint_access" {
   name        = "${local.prefix}-endpoint-access"
   vpc_id      = aws_vpc.main.id
 
+  revoke_rules_on_delete = true
+
   ingress {
     cidr_blocks = [aws_vpc.main.cidr_block]
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
+    description = "HTTPS from VPC"
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "All egress"
   }
 }
 
