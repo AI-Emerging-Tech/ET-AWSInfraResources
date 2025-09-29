@@ -42,9 +42,9 @@ resource "aws_amplify_app" "et_ai_poc_portal" {
     # NEXTAUTH_URL = "https://${var.ui_branch_name}.${aws_amplify_app.et_ai_poc_portal.default_domain}/"
   }
   #prevent accidental deletion during terraform destroy
-  lifecycle {
-    prevent_destroy = true
-  }
+  #lifecycle {
+   # prevent_destroy = true
+  #}
 }
 
 resource "aws_amplify_branch" "amplify_branch" {
