@@ -41,6 +41,10 @@ resource "aws_amplify_app" "et_ai_poc_portal" {
     # If your NextAuth or app needs env at APP level, add here or on the branch
     # NEXTAUTH_URL = "https://${var.ui_branch_name}.${aws_amplify_app.et_ai_poc_portal.default_domain}/"
   }
+  #prevent accidental deletion during terraform destroy
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_amplify_branch" "amplify_branch" {
