@@ -3,7 +3,7 @@
 ############
 
 resource "aws_db_subnet_group" "main" {
-  name = "${local.prefix}-main"
+  name = "${local.prefix}-db-${aws_vpc.main.id}"
   subnet_ids = [
     aws_subnet.private_a.id,
     aws_subnet.private_b.id
@@ -11,6 +11,9 @@ resource "aws_db_subnet_group" "main" {
 
   tags = {
     Name = "${local.prefix}-db-subnet-group"
+  }
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
