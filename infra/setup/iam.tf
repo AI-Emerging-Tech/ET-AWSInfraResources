@@ -844,31 +844,42 @@ data "aws_iam_policy_document" "aoss_data_plane" {
 # Minimal Route53 perms needed by AOSS VPCE #
 #############################################
 
-data "aws_iam_policy_document" "route53_min_for_aoss" {
+#############################################
+# Route53 permissions required by AOSS VPCE #
+#############################################
+
+data "aws_iam_policy_document" "route53_for_aoss" {
   statement {
-    sid    = "AllowHostedZonesLookupByVPC"
+    sid    = "AllowAossHostedZoneLifecycle"
     effect = "Allow"
     actions = [
-      "route53:ListHostedZonesByVPC",
-      # add a couple of safe readers commonly needed by AWS SDKs:
+      "route53:CreateHostedZone",
+      "route53:DeleteHostedZone",
+      "route53:ChangeResourceRecordSets",
+      "route53:GetHostedZone",
+      "route53:GetChange",
       "route53:ListHostedZones",
-      "route53:GetHostedZone"
+      "route53:ListHostedZonesByVPC",
+      "route53:AssociateVPCWithHostedZone",
+      "route53:DisassociateVPCFromHostedZone",
+      # occasionally used when cross-account VPC associations are involved:
+      "route53:CreateVPCAssociationAuthorization",
+      "route53:DeleteVPCAssociationAuthorization"
     ]
     resources = ["*"]
   }
 }
 
-resource "aws_iam_policy" "route53_min_for_aoss" {
-  name        = "${aws_iam_user.cd.name}-route53-min-for-aoss"
-  description = "Minimal Route53 permissions required to create OpenSearch Serverless VPC endpoints"
-  policy      = data.aws_iam_policy_document.route53_min_for_aoss.json
+resource "aws_iam_policy" "route53_for_aoss" {
+  name        = "${aws_iam_user.cd.name}-route53-for-aoss"
+  description = "Route53 permissions needed to create/destroy OpenSearch Serverless VPC endpoints with private DNS"
+  policy      = data.aws_iam_policy_document.route53_for_aoss.json
 }
 
-resource "aws_iam_user_policy_attachment" "cd_route53_min_for_aoss" {
+resource "aws_iam_user_policy_attachment" "cd_route53_for_aoss" {
   user       = aws_iam_user.cd.name
-  policy_arn = aws_iam_policy.route53_min_for_aoss.arn
+  policy_arn = aws_iam_policy.route53_for_aoss.arn
 }
-
 
 # resource "aws_iam_policy" "aoss_data_plane" {
 #   name        = "${local.prefix}-aoss-data-plane"
