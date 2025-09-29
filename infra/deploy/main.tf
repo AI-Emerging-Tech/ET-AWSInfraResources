@@ -4,10 +4,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "6.0.0"
     }
-    ec = {
-      source  = "elastic/ec"
-      version = "0.12.2"
-    }
+    # ec = {
+    #   source  = "elastic/ec"
+    #   version = "0.12.2"
+    # }
   }
   backend "s3" {
     bucket               = "devops-et-ai-tf-state"
