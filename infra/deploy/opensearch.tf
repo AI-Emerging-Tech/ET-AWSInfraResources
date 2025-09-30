@@ -60,6 +60,10 @@ resource "aws_opensearchserverless_security_policy" "network_policy" {
     #   AllowFromPublic = true
     # }
   ])
+  depends_on = [
+    aws_opensearchserverless_collection.collection,
+    aws_opensearchserverless_vpc_endpoint.aoss
+  ]
 }
 
 
@@ -94,9 +98,13 @@ resource "aws_opensearchserverless_access_policy" "data_access_policy" {
         }
       ],
       Principal = [
-        data.aws_caller_identity.current.arn
-        #local.aoss_principals
+        #data.aws_caller_identity.current.arn
+        local.aoss_principals
       ]
     }
   ])
+  depends_on = [
+    aws_opensearchserverless_security_policy.network_policy,
+    aws_opensearchserverless_collection.collection
+  ]
 }
