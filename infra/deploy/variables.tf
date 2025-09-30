@@ -124,7 +124,7 @@ variable "aws_region" {
 
 variable "collection_name" {
   description = "Name of the OpenSearch Serverless collection."
-  default     = "example-collection"
+  default     = "examplecollection"
 }
 
 # locals {
