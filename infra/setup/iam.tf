@@ -744,70 +744,59 @@ resource "aws_iam_user_policy" "cd_amplify_min_inline" {
   user   = aws_iam_user.cd.name
   policy = data.aws_iam_policy_document.amplify_min.json
 }
-#############################################
-# OpenSearch Serverless (AOSS) – Control Plane
-# Grants CD user the ability to provision AOSS:
-# - Collections, VPC endpoints, Security Policies, Access Policies
-# - Tagging and read/list operations
-#############################################
-
+############################################################
+# OpenSearch Serverless (AOSS) — Control Plane (FIX HERE)  #
+# Includes LIST/GET permissions so refresh doesn't drop     #
+# the collection with "empty result".                      #
+############################################################
 data "aws_iam_policy_document" "aoss_control_plane" {
+  # Write/admin plane
   statement {
     sid    = "AossWriteAdministrative"
     effect = "Allow"
     actions = [
-      # Collections
       "aoss:CreateCollection",
       "aoss:UpdateCollection",
       "aoss:DeleteCollection",
-      # VPC endpoints
       "aoss:CreateVpcEndpoint",
       "aoss:UpdateVpcEndpoint",
       "aoss:DeleteVpcEndpoint",
-      # Security & encryption/network policies
       "aoss:CreateSecurityPolicy",
       "aoss:UpdateSecurityPolicy",
       "aoss:DeleteSecurityPolicy",
-      # Data access policies
       "aoss:CreateAccessPolicy",
       "aoss:UpdateAccessPolicy",
       "aoss:DeleteAccessPolicy",
-      # Index ops (optional for infra; useful if you auto-create indices)
-      "aoss:CreateIndex",
-      "aoss:UpdateIndex",
-      "aoss:DeleteIndex",
-      # Account/capacity & lifecycle (optional; include if you manage these)
       "aoss:UpdateAccountSettings",
       "aoss:CreateLifecyclePolicy",
       "aoss:UpdateLifecyclePolicy",
       "aoss:DeleteLifecyclePolicy",
-      # Tagging
       "aoss:TagResource",
       "aoss:UntagResource"
     ]
-    resources = ["*"] # many AOSS actions don't support resource-level ARNs
+    resources = ["*"]
   }
 
+  # READ/LIST/DESCRIBE – this is essential for terraform refresh
   statement {
     sid    = "AossReadListDescribe"
     effect = "Allow"
     actions = [
-      "aoss:GetAccessPolicy",
-      "aoss:ListAccessPolicies",
-      "aoss:GetSecurityPolicy",
-      "aoss:ListSecurityPolicies",
-      "aoss:GetSecurityConfig",
-      "aoss:ListSecurityConfigs",
-      "aoss:GetPoliciesStats",
-      "aoss:GetAccountSettings",
       "aoss:ListCollections",
       "aoss:BatchGetCollection",
+      "aoss:ListAccessPolicies",
+      "aoss:GetAccessPolicy",
+      "aoss:ListSecurityPolicies",
+      "aoss:GetSecurityPolicy",
+      "aoss:GetPoliciesStats",
+      "aoss:GetAccountSettings",
       "aoss:ListVpcEndpoints",
       "aoss:BatchGetVpcEndpoint",
-      "aoss:GetIndex",
       "aoss:ListLifecyclePolicies",
-      "aoss:BatchGetEffectiveLifecyclePolicy",
       "aoss:BatchGetLifecyclePolicy",
+      "aoss:BatchGetEffectiveLifecyclePolicy",
+      "aoss:ListSecurityConfigs",
+      "aoss:GetSecurityConfig",
       "aoss:ListTagsForResource"
     ]
     resources = ["*"]
@@ -816,7 +805,7 @@ data "aws_iam_policy_document" "aoss_control_plane" {
 
 resource "aws_iam_policy" "aoss_control_plane" {
   name        = "${aws_iam_user.cd.name}-aoss-control-plane"
-  description = "Provisioning permissions for Amazon OpenSearch Serverless (collections, VPCEs, policies)."
+  description = "Provisioning permissions for Amazon OpenSearch Serverless."
   policy      = data.aws_iam_policy_document.aoss_control_plane.json
 }
 
@@ -824,30 +813,11 @@ resource "aws_iam_user_policy_attachment" "cd_aoss_control_plane" {
   user       = aws_iam_user.cd.name
   policy_arn = aws_iam_policy.aoss_control_plane.arn
 }
-#############################################
-# OpenSearch Serverless – Data Plane (App Access)
-# Add to ECS task/Lambda role (NOT the CD user)
-#############################################
 
-data "aws_iam_policy_document" "aoss_data_plane" {
-  statement {
-    sid    = "AossApiAccessForApp"
-    effect = "Allow"
-    actions = [
-      "aoss:APIAccessAll" # required for collection/index data APIs
-      # "aoss:DashboardsAccessAll" # include only if the role must access Dashboards
-    ]
-    resources = ["*"] # AWS scopes this via AOSS data access policy on the collection
-  }
-}
-#############################################
-# Minimal Route53 perms needed by AOSS VPCE #
-#############################################
-
-#############################################
-# Route53 permissions required by AOSS VPCE #
-#############################################
-
+#########################################################
+# Route53 permissions needed when creating AOSS VPCE    #
+# (private DNS hosted zone lifecycle)                   #
+#########################################################
 data "aws_iam_policy_document" "route53_for_aoss" {
   statement {
     sid    = "AllowAossHostedZoneLifecycle"
@@ -862,7 +832,6 @@ data "aws_iam_policy_document" "route53_for_aoss" {
       "route53:ListHostedZonesByVPC",
       "route53:AssociateVPCWithHostedZone",
       "route53:DisassociateVPCFromHostedZone",
-      # occasionally used when cross-account VPC associations are involved:
       "route53:CreateVPCAssociationAuthorization",
       "route53:DeleteVPCAssociationAuthorization"
     ]
@@ -872,7 +841,7 @@ data "aws_iam_policy_document" "route53_for_aoss" {
 
 resource "aws_iam_policy" "route53_for_aoss" {
   name        = "${aws_iam_user.cd.name}-route53-for-aoss"
-  description = "Route53 permissions needed to create/destroy OpenSearch Serverless VPC endpoints with private DNS"
+  description = "Route53 permissions for OpenSearch Serverless VPC endpoints with private DNS"
   policy      = data.aws_iam_policy_document.route53_for_aoss.json
 }
 
@@ -880,91 +849,3 @@ resource "aws_iam_user_policy_attachment" "cd_route53_for_aoss" {
   user       = aws_iam_user.cd.name
   policy_arn = aws_iam_policy.route53_for_aoss.arn
 }
-
-# resource "aws_iam_policy" "aoss_data_plane" {
-#   name        = "${local.prefix}-aoss-data-plane"
-#   description = "Permit app role to call AOSS data APIs (pair with AOSS data access policy)."
-#   policy      = data.aws_iam_policy_document.aoss_data_plane.json
-# }
-
-# Example attachment to your ECS task role (adjust role ref as needed)
-# resource "aws_iam_role_policy_attachment" "app_task_aoss_data" {
-#   role       = aws_iam_role.app_task.name
-#   policy_arn = aws_iam_policy.aoss_data_plane.arn
-# }
-
-
-# #########################
-# # Policy for EFS access #
-# #########################
-
-# data "aws_iam_policy_document" "efs" {
-#   statement {
-#     effect = "Allow"
-#     actions = [
-#       "elasticfilesystem:DescribeFileSystems",
-#       "elasticfilesystem:DescribeAccessPoints",
-#       "elasticfilesystem:DeleteFileSystem",
-#       "elasticfilesystem:DeleteAccessPoint",
-#       "elasticfilesystem:DescribeMountTargets",
-#       "elasticfilesystem:DeleteMountTarget",
-#       "elasticfilesystem:DescribeMountTargetSecurityGroups",
-#       "elasticfilesystem:DescribeLifecycleConfiguration",
-#       "elasticfilesystem:CreateMountTarget",
-#       "elasticfilesystem:CreateAccessPoint",
-#       "elasticfilesystem:CreateFileSystem",
-#       "elasticfilesystem:TagResource",
-#     ]
-#     resources = ["*"]
-#   }
-# }
-
-# resource "aws_iam_policy" "efs" {
-#   name        = "${aws_iam_user.cd.name}-efs"
-#   description = "Allow user to manage EFS resources."
-#   policy      = data.aws_iam_policy_document.efs.json
-# }
-
-# resource "aws_iam_user_policy_attachment" "efs" {
-#   user       = aws_iam_user.cd.name
-#   policy_arn = aws_iam_policy.efs.arn
-# }
-
-
-# #############################
-# # Policy for Route53 access #
-# #############################
-
-# data "aws_iam_policy_document" "route53" {
-#   statement {
-#     effect = "Allow"
-#     actions = [
-#       "route53:ListHostedZones",
-#       "route53:ListHostedZones",
-#       "route53:ChangeTagsForResource",
-#       "route53:GetHostedZone",
-#       "route53:ListTagsForResource",
-#       "route53:ChangeResourceRecordSets",
-#       "route53:GetChange",
-#       "route53:ListResourceRecordSets",
-#       "acm:RequestCertificate",
-#       "acm:AddTagsToCertificate",
-#       "acm:DescribeCertificate",
-#       "acm:ListTagsForCertificate",
-#       "acm:DeleteCertificate",
-#       "acm:CreateCertificate"
-#     ]
-#     resources = ["*"]
-#   }
-# }
-
-# resource "aws_iam_policy" "route53" {
-#   name        = "${aws_iam_user.cd.name}-route53"
-#   description = "Allow user to manage Route53 resources."
-#   policy      = data.aws_iam_policy_document.route53.json
-# }
-
-# resource "aws_iam_user_policy_attachment" "route53" {
-#   user       = aws_iam_user.cd.name
-#   policy_arn = aws_iam_policy.route53.arn
-# }
