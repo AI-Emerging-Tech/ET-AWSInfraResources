@@ -42,9 +42,9 @@ data "aws_partition" "current" {}
 
 
 # Safer principals list for AOSS access policy
-locals {
-  aoss_principals = coalescelist(
-    var.aoss_allowed_principals,
-    [data.aws_caller_identity.current.arn]
-  )
-}
+# locals {
+#   aoss_principals = coalescelist(
+#     var.aoss_allowed_principals,
+#     [data.aws_caller_identity.current.arn]
+#   )
+# }
