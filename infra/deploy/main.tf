@@ -39,3 +39,12 @@ data "aws_region" "current" {}
 # Gets access to the effective Account ID in which Terraform is authorized
 data "aws_caller_identity" "current" {}
 data "aws_partition" "current" {}
+
+
+# Safer principals list for AOSS access policy
+locals {
+  aoss_principals = coalescelist(
+    var.aoss_allowed_principals,
+    [data.aws_caller_identity.current.arn]
+  )
+}
