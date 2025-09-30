@@ -19,10 +19,10 @@ resource "aws_opensearchserverless_security_policy" "encryption_policy" {
 }
 
 # # Creates a collection
-  resource "aws_opensearchserverless_collection" "collection" {
-    name = var.collection_name
-    type = "VECTORSEARCH"
-    depends_on = [aws_opensearchserverless_security_policy.encryption_policy]
+resource "aws_opensearchserverless_collection" "collection" {
+  name       = var.collection_name
+  type       = "VECTORSEARCH"
+  depends_on = [aws_opensearchserverless_security_policy.encryption_policy]
 }
 
 # Creates a network security policy
