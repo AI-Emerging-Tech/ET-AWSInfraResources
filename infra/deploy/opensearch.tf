@@ -2,7 +2,7 @@
 
 # Creates an encryption security policy
 resource "aws_opensearchserverless_security_policy" "encryption_policy" {
-  name        = "example-encryption-policy"
+  name        = "${local.prefix}-aoss-encryption"
   type        = "encryption"
   description = "encryption policy for ${var.collection_name}"
   policy = jsonencode({
@@ -18,16 +18,16 @@ resource "aws_opensearchserverless_security_policy" "encryption_policy" {
   })
 }
 
-# Creates a collection
-resource "aws_opensearchserverless_collection" "collection" {
-  name = var.collection_name
-
-  depends_on = [aws_opensearchserverless_security_policy.encryption_policy]
+# # Creates a collection
+  resource "aws_opensearchserverless_collection" "collection" {
+    name = var.collection_name
+    type = "VECTORSEARCH"
+    depends_on = [aws_opensearchserverless_security_policy.encryption_policy]
 }
 
 # Creates a network security policy
 resource "aws_opensearchserverless_security_policy" "network_policy" {
-  name        = "example-network-policy"
+  name        = "${local.prefix}-aoss-network"
   type        = "network"
   description = "public access for dashboard, VPC access for collection endpoint"
   policy = jsonencode([
@@ -37,7 +37,8 @@ resource "aws_opensearchserverless_security_policy" "network_policy" {
         {
           ResourceType = "collection",
           Resource = [
-            "collection/${var.collection_name}"
+            #"collection/${var.collection_name}"
+            "collection/${aws_opensearchserverless_collection.collection.name}"
           ]
         }
       ],
@@ -45,19 +46,19 @@ resource "aws_opensearchserverless_security_policy" "network_policy" {
       SourceVPCEs = [
         aws_opensearchserverless_vpc_endpoint.aoss.id
       ]
-    },
-    {
-      Description = "Public access for dashboards",
-      Rules = [
-        {
-          ResourceType = "dashboard"
-          Resource = [
-            "collection/${var.collection_name}"
-          ]
-        }
-      ],
-      AllowFromPublic = true
     }
+    # {
+    #   Description = "Public access for dashboards",
+    #   Rules = [
+    #     {
+    #       ResourceType = "dashboard"
+    #       Resource = [
+    #         "collection/${var.collection_name}"
+    #       ]
+    #     }
+    #   ],
+    #   AllowFromPublic = true
+    # }
   ])
 }
 
@@ -65,7 +66,7 @@ resource "aws_opensearchserverless_security_policy" "network_policy" {
 
 # Creates a data access policy
 resource "aws_opensearchserverless_access_policy" "data_access_policy" {
-  name        = "example-data-access-policy"
+  name        = "${local.prefix}-aoss-access"
   type        = "data"
   description = "allow index and collection access"
   policy = jsonencode([
@@ -74,7 +75,8 @@ resource "aws_opensearchserverless_access_policy" "data_access_policy" {
         {
           ResourceType = "index",
           Resource = [
-            "index/${var.collection_name}/*"
+            #"index/${var.collection_name}/*"
+            "index/${aws_opensearchserverless_collection.collection.name}/*"
           ],
           Permission = [
             "aoss:*"
@@ -83,7 +85,8 @@ resource "aws_opensearchserverless_access_policy" "data_access_policy" {
         {
           ResourceType = "collection",
           Resource = [
-            "collection/${var.collection_name}"
+            #"collection/${var.collection_name}"
+            "collection/${aws_opensearchserverless_collection.collection.name}"
           ],
           Permission = [
             "aoss:*"
@@ -92,6 +95,7 @@ resource "aws_opensearchserverless_access_policy" "data_access_policy" {
       ],
       Principal = [
         data.aws_caller_identity.current.arn
+        #local.aoss_principals
       ]
     }
   ])
