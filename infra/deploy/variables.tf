@@ -117,14 +117,14 @@ variable "elasticsearch_connection_secret" {
 
 
 
+variable "aws_region" {
+  description = "The AWS region to create things in."
+  default     = "us-east-1"
+}
+
 variable "collection_name" {
   description = "Name of the OpenSearch Serverless collection."
-  default     = "vamet-rag-collection"
-}
-variable "aoss_allowed_principals" {
-  description = "IAM ARNs allowed data/index access to the collection"
-  type        = list(string)
-  default     = []
+  default     = "example-collection"
 }
 
 # locals {

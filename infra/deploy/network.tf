@@ -240,13 +240,13 @@ resource "aws_vpc_endpoint" "s3" {
     Name = "${local.prefix}-s3-endpoint"
   }
 }
-# Creates a opensearch serverless endpoint
-resource "aws_opensearchserverless_vpc_endpoint" "aoss" {
-  name               = "${local.prefix}-aoss"
-  vpc_id             = aws_vpc.main.id
-  subnet_ids         = [aws_subnet.private_a.id, aws_subnet.private_b.id]
-  security_group_ids = [aws_security_group.endpoint_access.id]
-}
+# # Creates a opensearch serverless endpoint
+# resource "aws_opensearchserverless_vpc_endpoint" "aoss" {
+#   name               = "${local.prefix}-aoss"
+#   vpc_id             = aws_vpc.main.id
+#   subnet_ids         = [aws_subnet.private_a.id, aws_subnet.private_b.id]
+#   security_group_ids = [aws_security_group.endpoint_access.id]
+# }
 
 # Creates a Amazon OpenSearch Service (managed domains) endpoint
 # resource "aws_vpc_endpoint" "opensearch_interface" {
