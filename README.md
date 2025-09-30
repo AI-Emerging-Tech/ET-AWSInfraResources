@@ -217,6 +217,3 @@ Numbers (0–9)
 Special characters !#$%&()*+,-./:;<=>?@[]^_{|}~
 ❌ Cannot contain /, ", or @ at the beginning.
 ❌ No spaces allowed
-
-
-#validate open search collection
