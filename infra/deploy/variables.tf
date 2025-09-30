@@ -121,6 +121,17 @@ variable "collection_name" {
   description = "Name of the OpenSearch Serverless collection."
   default     = "vamet-rag-collection"
 }
+variable "aoss_allowed_principals" {
+  description = "IAM ARNs allowed data/index access to the collection"
+  type        = list(string)
+  default     = []
+}
+
+# locals {
+#   aoss_principals = (length(var.aoss_allowed_principals) > 0)
+#     ? var.aoss_allowed_principals
+#     : [data.aws_caller_identity.current.arn]
+# }
 
 # variable "domain_name" {
 #   type        = string

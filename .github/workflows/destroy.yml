@@ -26,4 +26,4 @@ jobs:
           export TF_WORKSPACE=${{ github.event.inputs.environment }}
           cd infra/
           docker compose run --rm terraform -chdir=deploy/ init
-          docker compose run --rm terraform -chdir=deploy/ destroy -auto-approve || echo "some resources are protected and were not destroyed"
+          docker compose run --rm terraform -chdir=deploy/ destroy -auto-approve
