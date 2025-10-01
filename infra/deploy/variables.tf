@@ -24,15 +24,15 @@ variable "db_password" {
   description = "Password for the Terraform database"
 }
 
-variable "ecr_proxy_image" {
+variable "ecr_repo_proxy" {
   description = "Path to the ECR repo with the proxy image"
 }
 
-variable "ecr_app_image" {
+variable "ecr_repo_app" {
   description = "Path to the ECR repo with the API image"
 }
 
-variable "ecr_tools_image" {
+variable "ecr_repo_tools" {
   description = "Path to the ECR repo with the tools image"
 }
 
@@ -79,9 +79,9 @@ variable "auth_secret" {
   description = "Auth secret for JWT decprition"
 }
 
-variable "aws_dynamodb_table" {
+variable "users_table" {
   description = "lambda authorizer user table"
-  default     = "users"
+  default     = "user-details"
 }
 
 variable "az_client_id" {
@@ -104,18 +104,8 @@ variable "az_tenant_id" {
 variable "datasource_bucket_name" {
   description = "Optional explicit S3 bucket name. Leave blank to auto-generate."
   type        = string
-  default     = ""
+  default     = "kb-storage"
 }
-
-variable "elasticsearch_private_https_endpoint" {
-  type = string
-}
-
-variable "elasticsearch_connection_secret" {
-  type = string
-}
-
-
 
 variable "aws_region" {
   description = "The AWS region to create things in."
