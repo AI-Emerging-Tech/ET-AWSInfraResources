@@ -116,6 +116,12 @@ variable "collection_name" {
   description = "Name of the OpenSearch Serverless collection."
   default     = "examplecollection"
 }
+# EC2 instance role that your app runs under; leave empty if you only call from the CD user
+# variable "ec2_instance_role_name" {
+#   description = "Name of the EC2 instance IAM role that runs the app (used in AOSS data policy)"
+#   type        = string
+#   default     = ""
+# }
 
 # locals {
 #   aoss_principals = (length(var.aoss_allowed_principals) > 0)
