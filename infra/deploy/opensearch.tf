@@ -67,7 +67,14 @@ resource "aws_opensearchserverless_security_policy" "network_policy" {
     }
   ])
 }
+# locals {
+#   cd_user_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/devops-app-cd-user"
 
+#   aoss_data_principals = compact([
+#     var.ec2_instance_role_name != "" ? "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.ec2_instance_role_name}" : "",
+#     local.cd_user_arn,
+#   ])
+# }
 
 
 resource "aws_opensearchserverless_access_policy" "data_access_policy" {
@@ -81,15 +88,20 @@ resource "aws_opensearchserverless_access_policy" "data_access_policy" {
         {
           ResourceType = "index"
           Resource     = ["index/${var.collection_name}/*"]
-          Permission   = ["aoss:*"]
+          Permission   = ["aoss:APIAccessAll"]
         },
         {
           ResourceType = "collection"
           Resource     = ["collection/${var.collection_name}"]
-          Permission   = ["aoss:*"]
+          Permission   = ["aoss:APIAccessAll"]
         }
       ]
-      Principal = [data.aws_caller_identity.current.arn]
+      # Principal = [data.aws_caller_identity.current.arn]
+      # Principal = local.aoss_data_principals
+      Principal = [
+        "arn:aws:iam::061051228043:role/ssm-role",          # <-- your EC2 role from the screenshot
+        "arn:aws:iam::061051228043:user/devops-app-cd-user" # <-- your CD user
+      ]
     }
   ])
 }
