@@ -59,7 +59,7 @@ resource "aws_ecs_task_definition" "api" {
 
     {
       name              = "api"
-      image             = var.ecr_repo_app
+      image             = var.ecr_app_image
       essential         = true
       memoryReservation = 256
       user              = "django-user"
@@ -113,7 +113,7 @@ resource "aws_ecs_task_definition" "api" {
     },
     {
       name              = "proxy"
-      image             = var.ecr_repo_proxy
+      image             = var.ecr_proxy_image
       essential         = true
       memoryReservation = 256
       user              = "nginx"
@@ -155,7 +155,7 @@ resource "aws_ecs_task_definition" "api" {
     },
     {
       name              = "tools"
-      image             = var.ecr_repo_tools
+      image             = var.ecr_tools_image
       essential         = true
       memoryReservation = 256
       # user              = "appuser"
