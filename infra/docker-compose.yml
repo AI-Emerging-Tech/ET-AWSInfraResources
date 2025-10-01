@@ -23,4 +23,4 @@ services:
       - TF_VAR_ecr_repo_proxy=${ECR_REPO_PROXY}
       - TF_VAR_ecr_repo_app=${ECR_REPO_APP}
       - TF_VAR_ecr_repo_tools=${ECR_REPO_TOOLS}
-      - TF_VAR_cd_github_access_token=${TF_VAR_CD_GITHUB_ACCESS_TOKEN}
+      - TF_VAR_cd_github_access_token=${TF_VAR_cd_github_access_token}
