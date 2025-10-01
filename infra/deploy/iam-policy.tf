@@ -13,13 +13,13 @@ data "aws_iam_policy_document" "authorizer_ddb" {
       "dynamodb:Query"
     ]
     resources = [
-      "arn:${data.aws_partition.current.partition}:dynamodb:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:table/${var.aws_dynamodb_table}"
+      "arn:${data.aws_partition.current.partition}:dynamodb:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:table/${var.users_table}"
     ]
   }
 }
 
 resource "aws_iam_role_policy" "authorizer_ddb" {
-  count  = var.aws_dynamodb_table == "" ? 0 : 1
+  count  = var.users_table == "" ? 0 : 1
   name   = "authorizer-ddb-read"
   role   = aws_iam_role.iam-role.id
   policy = data.aws_iam_policy_document.authorizer_ddb.json

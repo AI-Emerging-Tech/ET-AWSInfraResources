@@ -17,7 +17,7 @@ resource "aws_lambda_function" "api_gateway_authorizer" {
   environment {
     variables = {
       AUTH_SECRET  = var.auth_secret
-      USERS_TABLE  = var.aws_dynamodb_table
+      USERS_TABLE  = var.users_table
       AZ_CLIENT_ID = var.az_client_id
       AZ_TENANT    = var.az_tenant_id
     }

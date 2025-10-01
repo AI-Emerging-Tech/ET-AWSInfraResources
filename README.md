@@ -1,9 +1,9 @@
 
 <div align="center">
     <p>Full-Stack Consulting and Courses.</p>
-    <a href="https://eenadu.net" target="_blank">Website</a> |
+    <a href="https://valuemomentum.com/consulting/" target="_blank">Website</a> |
     
-    <a href="https://valuemomentum.com/consulting/" target="_blank">Consulting
+    
 </div>
 
 <br /><br >
