@@ -24,15 +24,15 @@ variable "db_password" {
   description = "Password for the Terraform database"
 }
 
-variable "ecr_repo_proxy" {
+variable "ecr_proxy_image" {
   description = "Path to the ECR repo with the proxy image"
 }
 
-variable "ecr_repo_app" {
+variable "ecr_app_image" {
   description = "Path to the ECR repo with the API image"
 }
 
-variable "ecr_repo_tools" {
+variable "ecr_tools_image" {
   description = "Path to the ECR repo with the tools image"
 }
 

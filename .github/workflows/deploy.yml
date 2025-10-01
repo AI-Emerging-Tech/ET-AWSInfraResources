@@ -66,13 +66,10 @@ jobs:
           TF_VAR_users_table: ${{ vars.USERS_TABLE}}
           TF_VAR_auth_secret: ${{ secrets.TF_VAR_AUTH_SECRET }}
           TF_VAR_cd_github_access_token:  ${{ secrets.TF_VAR_CD_GITHUB_ACCESS_TOKEN }}
-          TF_VAR_django_secret_key: ${{ secrets.TF_VAR_DJANGO_SECRET_KEY }}
-          
-          
-         
+                  
         run: |
-          export TF_VAR_ecr_repo_app="${{ vars.ECR_REPO_APP }}:$GITHUB_SHA"
-          export TF_VAR_ecr_repo_proxy="${{ vars.ECR_REPO_PROXY }}:$GITHUB_SHA"
+          export TF_VAR_ecr_app_image="${{ vars.ECR_REPO_APP }}:$GITHUB_SHA"
+          export TF_VAR_ecr_proxy_image="${{ vars.ECR_REPO_PROXY }}:$GITHUB_SHA"
           export TF_VAR_ecr_repo_tools="${{ vars.ECR_REPO_TOOLS }}:latest"
           workspace=$(cat .workspace)
           cd infra/
