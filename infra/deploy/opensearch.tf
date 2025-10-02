@@ -88,12 +88,12 @@ resource "aws_opensearchserverless_access_policy" "data_access_policy" {
         {
           ResourceType = "index"
           Resource     = ["index/${var.collection_name}/*"]
-          Permission   = ["aoss:APIAccessAll"]
+          Permission   = ["aoss:*"]
         },
         {
           ResourceType = "collection"
           Resource     = ["collection/${var.collection_name}"]
-          Permission   = ["aoss:APIAccessAll"]
+          Permission   = ["aoss:*"]
         }
       ]
       Principal = [data.aws_caller_identity.current.arn]
