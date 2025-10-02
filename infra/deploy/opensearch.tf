@@ -96,12 +96,11 @@ resource "aws_opensearchserverless_access_policy" "data_access_policy" {
           Permission   = ["aoss:*"]
         }
       ]
-      Principal = [data.aws_caller_identity.current.arn]
+      # Principal = [data.aws_caller_identity.current.arn]
       # Principal = local.aoss_data_principals
-      # Principal = [
-      #   "arn:aws:iam::061051228043:role/ssm-role",          # <-- your EC2 role from the screenshot
-      #   "arn:aws:iam::061051228043:user/devops-app-cd-user" # <-- your CD user
-      # ]
+      Principal = [
+       "arn:aws:iam::061051228043:role/ssm-role"
+      ]
     }
   ])
 }
