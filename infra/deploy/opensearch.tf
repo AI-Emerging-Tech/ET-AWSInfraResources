@@ -97,7 +97,7 @@ resource "aws_opensearchserverless_access_policy" "data_access_policy" {
         }
       ]
       Principal = [
-        "arn:aws:iam::061051228043:role/ssm-role", # EC2 instance IAM role
+        #"arn:aws:iam::061051228043:role/ssm-role", # EC2 instance IAM role
         data.aws_caller_identity.current.arn       # Terraform runner identity
       ]
     }
