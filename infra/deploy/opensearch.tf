@@ -88,19 +88,18 @@ resource "aws_opensearchserverless_access_policy" "data_access_policy" {
         {
           ResourceType = "index"
           Resource     = ["index/${var.collection_name}/*"]
-          Permission   = ["aoss:*"]
+          Permission   = ["aoss:APIAccessAll"]
         },
         {
           ResourceType = "collection"
           Resource     = ["collection/${var.collection_name}"]
-          Permission   = ["aoss:*"]
+          Permission   = ["aoss:APIAccessAll"]
         }
       ]
-      Principal = [data.aws_caller_identity.current.arn]
-      # Principal = local.aoss_data_principals
-      #Principal = [
-      #"arn:aws:iam::061051228043:role/ssm-role"
-      #]
+      Principal = [
+        "arn:aws:iam::061051228043:role/ssm-role", # EC2 instance IAM role
+        data.aws_caller_identity.current.arn       # Terraform runner identity
+      ]
     }
   ])
 }
