@@ -114,7 +114,7 @@ variable "aws_region" {
 
 variable "collection_name" {
   description = "Name of the OpenSearch Serverless collection."
-  default     = "examplecollection"
+  default     = "et-ai-vector-collection"
 }
 # EC2 instance role that your app runs under; leave empty if you only call from the CD user
 # variable "ec2_instance_role_name" {
