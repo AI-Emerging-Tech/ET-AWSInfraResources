@@ -99,7 +99,7 @@ resource "aws_opensearchserverless_access_policy" "data_access_policy" {
       Principal = [data.aws_caller_identity.current.arn]
       # Principal = local.aoss_data_principals
       #Principal = [
-       #"arn:aws:iam::061051228043:role/ssm-role"
+      #"arn:aws:iam::061051228043:role/ssm-role"
       #]
     }
   ])
