@@ -11,7 +11,7 @@ services:
       - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
       - AWS_DEFAULT_REGION=us-east-1
       - TF_WORKSPACE=${TF_WORKSPACE}
-      - TF_VAR_auth_secret=${AUTH_SECRET}
+      - TF_VAR_auth_secret=${TF_VAR_auth_secret}
       - TF_VAR_az_client_id=${TF_VAR_az_client_id}
       - TF_VAR_az_tenant_id=${TF_VAR_az_tenant_id}
       #- TF_VAR_users_table=${TF_VAR_users_table}
