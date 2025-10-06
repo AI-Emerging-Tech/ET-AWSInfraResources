@@ -9,13 +9,6 @@ on:
         options:
           - demo
           - prod
-  # push:
-  #   branches:
-  #     - demo
-  #     - prod
-# permissions:
-#   id-token: write
-#   contents: read
 
 jobs:
   test-lint:
@@ -37,7 +30,7 @@ jobs:
           if [[ $GITHUB_REF == 'refs/heads/prod' ]]; then
             echo "prod" > .workspace
           else
-            echo "demo" > .workspace
+          echo "demo" > .workspace
           fi
       - name: Push to ECR
         env: 
@@ -49,24 +42,18 @@ jobs:
           docker push ${{ vars.ECR_REPO_APP }}:$GITHUB_SHA
           docker build --compress -t ${{ vars.ECR_REPO_PROXY }}:$GITHUB_SHA proxy/
           docker push ${{ vars.ECR_REPO_PROXY }}:$GITHUB_SHA
-      # - name: Configure AWS credentials (OIDC)
-      #   uses: aws-actions/configure-aws-credentials@v4
-      #   with:
-      #     role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-      #     aws-region: us-east-1
-
       - name: Terraform apply
         env:
           AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
           AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          TF_VAR_DB_PASSWORD: ${{ secrets.TF_VAR_DB_PASSWORD }}
+          TF_VAR_db_password: ${{ secrets.TF_VAR_DB_PASSWORD }}
           TF_VAR_az_client_id: ${{ secrets.TF_VAR_AZ_CLIENT_ID }}
           TF_VAR_az_tenant_id: ${{ secrets.TF_VAR_AZ_TENANT_ID }}
           TF_VAR_users_table: ${{ vars.USERS_TABLE}}
           TF_VAR_auth_secret: ${{ secrets.TF_VAR_AUTH_SECRET }}
           TF_VAR_cd_github_access_token:  ${{ secrets.TF_VAR_CD_GITHUB_ACCESS_TOKEN }}
-          TF_VAR_DJANGO_SECRET_KEY: ${{ secrets.TF_VAR_DJANGO_SECRET_KEY }}
+          TF_VAR_django_secret_key: ${{ secrets.TF_VAR_DJANGO_SECRET_KEY }}
                   
         run: |
           export TF_VAR_ecr_app_image="${{ vars.ECR_REPO_APP }}:$GITHUB_SHA"
@@ -77,20 +64,6 @@ jobs:
           docker compose run --rm terraform -chdir=deploy/ init
           docker compose run --rm terraform -chdir=deploy/ workspace select -or-create $workspace
           docker compose run --rm terraform -chdir=deploy/ apply -auto-approve
-      # - name: Put/Rotate Authorizer Shared Secret (post-apply, no TF state exposure)
-      #   env:
-      #     AUTH_SECRET: ${{ secrets.AUTH_SECRET }}  # set this in your repo or environment secrets
-      #   run: |
-      #     set -euo pipefail
-      #     if [ -z "${AUTH_SECRET:-}" ]; then
-      #       echo "::warning::AUTH_SECRET is not set; skipping secret write. Authorizer will fail unless AUTH_SECRET or AUTH_SECRET_ARN has a value."
-      #       exit 0
-      #     fi
-      #     AUTH_SECRET_ARN=$(terraform -chdir=${{ env.TF_WORKING_DIR }} output -raw auth_secret_arn)
-      #     aws secretsmanager put-secret-value \
-      #       --secret-id "$AUTH_SECRET_ARN" \
-      #       --secret-string "$AUTH_SECRET"
-      #     echo "Secret value written to $AUTH_SECRET_ARN"
 
 
 
