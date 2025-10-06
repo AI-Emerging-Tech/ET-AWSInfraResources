@@ -123,6 +123,10 @@ variable "ec2_instance_role_name" {
   default     = ""
 }
 
+locals {
+  # Enforce AOSS naming constraints without changing your input variable contract
+  collection_name_sanitized = lower(replace(var.collection_name, "[^a-z0-9]", ""))
+}
 # locals {
 #   aoss_principals = (length(var.aoss_allowed_principals) > 0)
 #     ? var.aoss_allowed_principals
