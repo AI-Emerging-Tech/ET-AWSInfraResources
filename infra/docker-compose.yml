@@ -23,4 +23,4 @@ services:
       - TF_VAR_ecr_proxy_image=${TF_VAR_ecr_proxy_image}
       - TF_VAR_ecr_app_image=${TF_VAR_ecr_app_image}
       - TF_VAR_ecr_tools_image=${TF_VAR_ecr_tools_image}
-      - TF_VAR_cd_github_access_token=${TF_VAR_cd_github_access_token}
+      - TF_VAR_CD_GITHUB_ACCESS_TOKEN=${TF_VAR_CD_GITHUB_ACCESS_TOKEN}
