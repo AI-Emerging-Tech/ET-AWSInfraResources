@@ -56,26 +56,17 @@ resource "aws_opensearchserverless_vpc_endpoint" "vpc_endpoint" {
   security_group_ids = [aws_security_group.endpoint_access.id]
 }
 
-
 resource "aws_opensearchserverless_security_policy" "network" {
   name = "${local.collection_name_sanitized}-network"
   type = "network"
 
-  # Allow access only via our VPC endpoint
+  # Allow access only via our specific VPC endpoint (AOSS expects "vpc/<vpce-id>")
   policy = jsonencode([
     {
       Rules = [
         {
-          ResourceType = "collection"
-          Resource     = ["collection/${local.collection_name_sanitized}"]
-        },
-        {
-          ResourceType = "dashboard"
-          Resource     = ["collection/${local.collection_name_sanitized}"]
-        },
-        {
           ResourceType = "vpc"
-          Resource     = [aws_opensearchserverless_vpc_endpoint.vpc_endpoint.id]
+          Resource     = ["vpc/${aws_opensearchserverless_vpc_endpoint.vpc_endpoint.id}"]
         }
       ]
     }
@@ -86,12 +77,19 @@ resource "aws_opensearchserverless_security_policy" "network" {
 
 #####################################
 # Data Access Policy (data plane)   #
-# Choose one of the two blocks:     #
-#  - FULL access (API + Dashboards) #
-#  - LEAST privilege (API only)     #
+# Hard-coded principals             #
 #####################################
 
-# (A) Full access (API + Dashboards) for principals
+# Hard-coded principals (no workflow/env var needed)
+locals {
+  aoss_hardcoded_principals = [
+    "arn:aws:iam::061051228043:user/devops-app-cd-user"
+    # Add more ARNs as needed, e.g.:
+    # "arn:aws:iam::<ACCOUNT_ID>:role/your-app-role",
+  ]
+}
+
+# Full access (API + Dashboards) for principals
 resource "aws_opensearchserverless_access_policy" "data_full" {
   name = "${local.collection_name_sanitized}-data"
   type = "data"
@@ -106,7 +104,7 @@ resource "aws_opensearchserverless_access_policy" "data_full" {
           Permission   = ["aoss:APIAccessAll", "aoss:DashboardsAccessAll"]
         }
       ]
-      Principal = local.aoss_principals
+      Principal = local.aoss_hardcoded_principals
     }
   ])
 
@@ -117,7 +115,9 @@ resource "aws_opensearchserverless_access_policy" "data_full" {
   ]
 }
 
-# (B) If you prefer least-privilege for an app without dashboards, comment (A) and use:
+# If you prefer least-privilege for an app without dashboards, comment the block above
+# and use this instead:
+#
 # resource "aws_opensearchserverless_access_policy" "data_minimal" {
 #   name = "${local.collection_name_sanitized}-data"
 #   type = "data"
@@ -131,7 +131,7 @@ resource "aws_opensearchserverless_access_policy" "data_full" {
 #           Permission   = ["aoss:CreateIndex", "aoss:ReadDocument", "aoss:WriteDocument"]
 #         }
 #       ]
-#       Principal = local.aoss_principals
+#       Principal = local.aoss_hardcoded_principals
 #     }
 #   ])
 #   depends_on = [
@@ -140,4 +140,3 @@ resource "aws_opensearchserverless_access_policy" "data_full" {
 #     aws_opensearchserverless_security_policy.network
 #   ]
 # }
-
