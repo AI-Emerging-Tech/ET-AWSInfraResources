@@ -21,8 +21,8 @@ resource "aws_opensearchserverless_collection" "collection" {
   type        = "VECTORSEARCH"
   description = "Vector store collection ${var.collection_name}"
   tags = {
-    Name        = "${local.prefix}-main"
-    Environment = terraform.workspace
+    Name = "${local.prefix}-collection"
+
   }
 }
 
