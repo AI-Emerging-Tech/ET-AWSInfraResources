@@ -71,6 +71,18 @@ output "collection_enpdoint" {
 output "dashboard_endpoint" {
   value = aws_opensearchserverless_collection.collection.dashboard_endpoint
 }
+#########################
+# Helpful output values #
+#########################
+output "aoss_collection_name" {
+  value       = aws_opensearchserverless_collection.collection.name
+  description = "OpenSearch Serverless collection name"
+}
+
+output "aoss_vpc_endpoint_id" {
+  value       = aws_opensearchserverless_vpc_endpoint.vpc_endpoint.id
+  description = "OpenSearch Serverless VPC endpoint ARN"
+}
 # output "function_arn" {
 #   value = module.lambda_function_container_image.lambda_function_arn
 # }

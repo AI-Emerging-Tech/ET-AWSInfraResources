@@ -2,8 +2,7 @@
 # OpenSearch Serverless (AOSS) - Secure
 ########################################
 
-
-# --- Name guardrails (keep your variable contract; enforce constraints) ---
+# Name guardrails (3..40 chars, a-z0-9 only — enforced by locals in variables.tf)
 resource "null_resource" "validate_collection_name" {
   triggers = { name = local.collection_name_sanitized }
   lifecycle {
@@ -14,23 +13,41 @@ resource "null_resource" "validate_collection_name" {
   }
 }
 
-# Encryption policy (AWS owned key)
-resource "aws_opensearchserverless_security_policy" "encryption_policy" {
-  name        = "example-encryption-policy"
-  type        = "encryption"
-  description = "encryption policy for ${local.collection_name_sanitized}"
+############################
+# AOSS Collection (vector) #
+############################
+resource "aws_opensearchserverless_collection" "collection" {
+  name        = local.collection_name_sanitized
+  type        = "VECTORSEARCH"
+  description = "Vector store collection ${local.collection_name_sanitized}"
+  tags = {
+    Name        = local.collection_name_sanitized
+    Environment = terraform.workspace
+  }
+}
+
+#########################################
+# Encryption Policy (AWS-owned KMS key) #
+#########################################
+resource "aws_opensearchserverless_security_policy" "encryption" {
+  name = "${local.collection_name_sanitized}-encryption"
+  type = "encryption"
 
   policy = jsonencode({
     Rules = [
       {
-        Resource     = ["collection/${local.collection_name_sanitized}"]
         ResourceType = "collection"
+        Resource     = ["collection/${local.collection_name_sanitized}"]
       }
     ]
+    # Use AWS-owned key by default. If you migrate to a CMK, replace with KMS key configuration.
     AWSOwnedKey = true
   })
 }
 
+##########################################################
+# Network Policy: restrict collection to our VPC endpoint
+##########################################################
 # VPC endpoint for AOSS (ENIs in PRIVATE subnets; SG from network.tf)
 resource "aws_opensearchserverless_vpc_endpoint" "vpc_endpoint" {
   name               = "${local.collection_name_sanitized}-aoss-vpce"
@@ -39,72 +56,88 @@ resource "aws_opensearchserverless_vpc_endpoint" "vpc_endpoint" {
   security_group_ids = [aws_security_group.endpoint_access.id]
 }
 
-# Network policy:
-# - VPC-only access for the collection endpoint (via the above VPCE)
-# - Public access for Dashboards tied to the collection
-resource "aws_opensearchserverless_security_policy" "network_policy" {
-  name        = "example-network-policy"
-  type        = "network"
-  description = "public access for dashboards, VPC access for collection endpoint"
 
+resource "aws_opensearchserverless_security_policy" "network" {
+  name = "${local.collection_name_sanitized}-network"
+  type = "network"
+
+  # Allow access only via our VPC endpoint
   policy = jsonencode([
     {
-      Description = "VPC access for collection endpoint"
       Rules = [
-        { ResourceType = "collection", Resource = ["collection/${local.collection_name_sanitized}"] }
+        {
+          ResourceType = "collection"
+          Resource     = ["collection/${local.collection_name_sanitized}"]
+        },
+        {
+          ResourceType = "dashboard"
+          Resource     = ["collection/${local.collection_name_sanitized}"]
+        },
+        {
+          ResourceType = "vpc"
+          Resource     = [aws_opensearchserverless_vpc_endpoint.vpc_endpoint.id]
+        }
       ]
-      AllowFromPublic = false
-      SourceVPCEs     = [aws_opensearchserverless_vpc_endpoint.vpc_endpoint.id]
-    },
-    {
-      Description = "Public access for dashboards"
-      Rules = [
-        # 'dashboard' Rules are associated with collections
-        { ResourceType = "dashboard", Resource = ["collection/${local.collection_name_sanitized}"] }
-      ]
-      AllowFromPublic = true
     }
   ])
 
   depends_on = [aws_opensearchserverless_vpc_endpoint.vpc_endpoint]
 }
 
-# Collection (VECTORSEARCH) — create only after both policies exist
-resource "aws_opensearchserverless_collection" "collection" {
-  name = local.collection_name_sanitized
-  type = "VECTORSEARCH"
-  depends_on = [
-    aws_opensearchserverless_security_policy.encryption_policy,
-    aws_opensearchserverless_security_policy.network_policy
-  ]
-}
+#####################################
+# Data Access Policy (data plane)   #
+# Choose one of the two blocks:     #
+#  - FULL access (API + Dashboards) #
+#  - LEAST privilege (API only)     #
+#####################################
 
-# Data Access Policy — use created collection name, keep your principal pattern
-resource "aws_opensearchserverless_access_policy" "data_access_policy" {
-  name        = "example-data-access-policy"
-  type        = "data"
-  description = "allow index and collection access"
+# (A) Full access (API + Dashboards) for principals
+resource "aws_opensearchserverless_access_policy" "data_full" {
+  name = "${local.collection_name_sanitized}-data"
+  type = "data"
 
   policy = jsonencode([
     {
+      Description = "Full collection access for principals"
       Rules = [
         {
-          ResourceType = "index"
-          Resource     = ["index/${aws_opensearchserverless_collection.collection.name}/*"]
-          Permission   = ["aoss:*"]
-        },
-        {
           ResourceType = "collection"
-          Resource     = ["collection/${aws_opensearchserverless_collection.collection.name}"]
-          Permission   = ["aoss:*"]
+          Resource     = ["collection/${local.collection_name_sanitized}"]
+          Permission   = ["aoss:APIAccessAll", "aoss:DashboardsAccessAll"]
         }
       ]
-      Principal = [
-        # Keep your CD runner identity; add more ARNs (roles/users) if needed
-        data.aws_caller_identity.current.arn
-      ]
+      Principal = local.aoss_principals
     }
   ])
 
-  depends_on = [aws_opensearchserverless_collection.collection]
+  depends_on = [
+    aws_opensearchserverless_collection.collection,
+    aws_opensearchserverless_security_policy.encryption,
+    aws_opensearchserverless_security_policy.network
+  ]
 }
+
+# (B) If you prefer least-privilege for an app without dashboards, comment (A) and use:
+# resource "aws_opensearchserverless_access_policy" "data_minimal" {
+#   name = "${local.collection_name_sanitized}-data"
+#   type = "data"
+#   policy = jsonencode([
+#     {
+#       Description = "Minimal document & index privileges for app"
+#       Rules = [
+#         {
+#           ResourceType = "collection"
+#           Resource     = ["collection/${local.collection_name_sanitized}"]
+#           Permission   = ["aoss:CreateIndex", "aoss:ReadDocument", "aoss:WriteDocument"]
+#         }
+#       ]
+#       Principal = local.aoss_principals
+#     }
+#   ])
+#   depends_on = [
+#     aws_opensearchserverless_collection.collection,
+#     aws_opensearchserverless_security_policy.encryption,
+#     aws_opensearchserverless_security_policy.network
+#   ]
+# }
+

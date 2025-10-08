@@ -18,6 +18,9 @@ services:
       - TF_VAR_auth_secret=${TF_VAR_auth_secret}
       - TF_VAR_az_client_id=${TF_VAR_az_client_id}
       - TF_VAR_az_tenant_id=${TF_VAR_az_tenant_id}
-      - TF_VAR_users_table=${users_table}
+      - TF_VAR_users_table=${TF_VAR_users_table}
       - TF_VAR_ecr_tools_image=${TF_VAR_ecr_tools_image}
       - TF_VAR_cd_github_access_token=${TF_VAR_cd_github_access_token}
+      # set the AOSS collection name per env (defaults to examplecollection if omitted)
+      - TF_VAR_collection_name=${TF_VAR_collection_name}
+      - TF_VAR_aoss_allowed_principals=${TF_VAR_aoss_allowed_principals}
