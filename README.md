@@ -217,4 +217,3 @@ Numbers (0–9)
 Special characters !#$%&()*+,-./:;<=>?@[]^_{|}~
 ❌ Cannot contain /, ", or @ at the beginning.
 ❌ No spaces allowed
-test opensearch 06-10-2025 13:46PM
