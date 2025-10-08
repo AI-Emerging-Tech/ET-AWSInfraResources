@@ -21,5 +21,4 @@ services:
       - TF_VAR_users_table=${TF_VAR_users_table}
       - TF_VAR_ecr_tools_image=${TF_VAR_ecr_tools_image}
       - TF_VAR_cd_github_access_token=${TF_VAR_cd_github_access_token}
-      # set the AOSS collection name per env (defaults to examplecollection if omitted)
       - TF_VAR_collection_name=${TF_VAR_collection_name}
