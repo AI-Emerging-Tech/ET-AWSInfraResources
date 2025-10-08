@@ -2,26 +2,26 @@
 # OpenSearch Serverless (AOSS) - Secure
 ########################################
 
-# Name guardrails (3..40 chars, a-z0-9 only — enforced by locals in variables.tf)
-resource "null_resource" "validate_collection_name" {
-  triggers = { name = local.collection_name_sanitized }
-  lifecycle {
-    precondition {
-      condition     = length(local.collection_name_sanitized) >= 3 && length(local.collection_name_sanitized) <= 40
-      error_message = "collection_name must be 3..40 chars, a-z0-9 only."
-    }
-  }
-}
+# # Name guardrails (3..40 chars, a-z0-9 only — enforced by locals in variables.tf)
+# resource "null_resource" "validate_collection_name" {
+#   triggers = { name = var.collection_name }
+#   lifecycle {
+#     precondition {
+#       condition     = length(var.collection_name) >= 3 && length(var.collection_name) <= 40
+#       error_message = "collection_name must be 3..40 chars, a-z0-9 only."
+#     }
+#   }
+# }
 
 ############################
 # AOSS Collection (vector) #
 ############################
 resource "aws_opensearchserverless_collection" "collection" {
-  name        = local.collection_name_sanitized
+  name        = var.collection_name
   type        = "VECTORSEARCH"
-  description = "Vector store collection ${local.collection_name_sanitized}"
+  description = "Vector store collection ${var.collection_name}"
   tags = {
-    Name        = local.collection_name_sanitized
+    Name        = "${local.prefix}-main"
     Environment = terraform.workspace
   }
 }
@@ -30,14 +30,14 @@ resource "aws_opensearchserverless_collection" "collection" {
 # Encryption Policy (AWS-owned KMS key) #
 #########################################
 resource "aws_opensearchserverless_security_policy" "encryption" {
-  name = "${local.collection_name_sanitized}-encryption"
+  name = "${var.collection_name}-encryption"
   type = "encryption"
 
   policy = jsonencode({
     Rules = [
       {
         ResourceType = "collection"
-        Resource     = ["collection/${local.collection_name_sanitized}"]
+        Resource     = ["collection/${var.collection_name}"]
       }
     ]
     # Use AWS-owned key by default. If you migrate to a CMK, replace with KMS key configuration.
@@ -50,14 +50,14 @@ resource "aws_opensearchserverless_security_policy" "encryption" {
 ##########################################################
 # VPC endpoint for AOSS (ENIs in PRIVATE subnets; SG from network.tf)
 resource "aws_opensearchserverless_vpc_endpoint" "vpc_endpoint" {
-  name               = "${local.collection_name_sanitized}-aoss-vpce"
+  name               = "${var.collection_name}-aoss-vpce"
   vpc_id             = aws_vpc.main.id
   subnet_ids         = [aws_subnet.private_a.id, aws_subnet.private_b.id]
   security_group_ids = [aws_security_group.endpoint_access.id]
 }
 
 resource "aws_opensearchserverless_security_policy" "network" {
-  name = "${local.collection_name_sanitized}-network"
+  name = "${var.collection_name}-network"
   type = "network"
 
   # Allow access only via our specific VPC endpoint (AOSS expects "vpc/<vpce-id>")
@@ -91,7 +91,7 @@ locals {
 
 # Full access (API + Dashboards) for principals
 resource "aws_opensearchserverless_access_policy" "data_full" {
-  name = "${local.collection_name_sanitized}-data"
+  name = "${var.collection_name}-data"
   type = "data"
 
   policy = jsonencode([
@@ -100,7 +100,7 @@ resource "aws_opensearchserverless_access_policy" "data_full" {
       Rules = [
         {
           ResourceType = "collection"
-          Resource     = ["collection/${local.collection_name_sanitized}"]
+          Resource     = ["collection/${var.collection_name}"]
           Permission   = ["aoss:APIAccessAll", "aoss:DashboardsAccessAll"]
         }
       ]
@@ -119,7 +119,7 @@ resource "aws_opensearchserverless_access_policy" "data_full" {
 # and use this instead:
 #
 # resource "aws_opensearchserverless_access_policy" "data_minimal" {
-#   name = "${local.collection_name_sanitized}-data"
+#   name = "${var.collection_name}-data"
 #   type = "data"
 #   policy = jsonencode([
 #     {
@@ -127,7 +127,7 @@ resource "aws_opensearchserverless_access_policy" "data_full" {
 #       Rules = [
 #         {
 #           ResourceType = "collection"
-#           Resource     = ["collection/${local.collection_name_sanitized}"]
+#           Resource     = ["collection/${var.collection_name}"]
 #           Permission   = ["aoss:CreateIndex", "aoss:ReadDocument", "aoss:WriteDocument"]
 #         }
 #       ]

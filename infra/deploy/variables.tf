@@ -109,10 +109,10 @@ variable "collection_name" {
   type        = string
   default     = "examplecollection"
 }
-locals {
-  # enforce AOSS naming rules without changing your input contract
-  collection_name_sanitized = lower(replace(var.collection_name, "[^a-z0-9]", ""))
-}
+# locals {
+#   # enforce AOSS naming rules without changing your input contract
+#   collection_name_sanitized = lower(replace(var.collection_name, "[^a-z0-9]", ""))
+# }
 
 
 # variable "domain_name" {
