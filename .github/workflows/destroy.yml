@@ -6,28 +6,25 @@ on:
       environment:
         type: choice
         description: Which environment to remove AWS resources for?
-        options: [ demo, prod ]
+        options:
+          - demo
+          - prod
 
 jobs:
   destroy:
-    name: Terraform Destroy
+    name: Destroy
     runs-on: ubuntu-22.04
-    env:
-      AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      TF_VAR_cd_github_access_token: ${{ secrets.TF_VAR_CD_GITHUB_ACCESS_TOKEN }}
-      # Keep AOSS naming consistent during destroy
-      TF_VAR_collection_name: ${{ vars.AOSS_COLLECTION_NAME }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Terraform (deploy/)
+      - name: Terraform Destroy
+        env:
+          AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          TF_VAR_cd_github_access_token:  ${{ secrets.TF_VAR_CD_GITHUB_ACCESS_TOKEN }}
+          TF_VAR_collection_name: ${{ vars.AOSS_COLLECTION_NAME }}
         run: |
-          set -e
           export TF_WORKSPACE=${{ github.event.inputs.environment }}
           cd infra/
           docker compose run --rm terraform -chdir=deploy/ init
-          docker compose run --rm terraform -chdir=deploy/ workspace select -or-create $TF_WORKSPACE
           docker compose run --rm terraform -chdir=deploy/ destroy -auto-approve

@@ -109,22 +109,9 @@ variable "collection_name" {
   type        = string
   default     = "examplecollection"
 }
-
-variable "aoss_allowed_principals" {
-  description = "List of IAM principals (roles/users) granted data access to the collection."
-  type        = list(string)
-  default     = []
-}
-
 locals {
-  # enforce aoss naming rules without changing your input contract
+  # enforce AOSS naming rules without changing your input contract
   collection_name_sanitized = lower(replace(var.collection_name, "[^a-z0-9]", ""))
-
-  # use provided principals or default to the caller (CI user/role)
-  aoss_principals = coalescelist(
-    var.aoss_allowed_principals,
-    [data.aws_caller_identity.current.arn]
-  )
 }
 
 
