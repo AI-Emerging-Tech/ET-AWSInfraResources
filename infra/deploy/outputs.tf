@@ -74,7 +74,7 @@ output "dashboard_endpoint" {
 #########################
 # Helpful output values #
 #########################
-output "aoss_collection_name" {
+output "collection_name" {
   value       = aws_opensearchserverless_collection.collection.name
   description = "OpenSearch Serverless collection name"
 }
