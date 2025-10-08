@@ -1,36 +1,29 @@
 ##################################################################
-# Create IAM user and policies for continuous deploy (CD) account
+# Create IAM user and policies for continuous deploy(CD) account #
 ##################################################################
 resource "aws_iam_user" "cd" {
   name = "devops-app-cd-user"
 }
-
 resource "aws_iam_access_key" "cd" {
   user = aws_iam_user.cd.name
 }
 
+
 #########################################################
-# Policy for Terraform backend (S3 state + DynamoDB lock)
+# Policy for Teraform backend to S3 and DynamoDB access #
 #########################################################
+
 data "aws_iam_policy_document" "tf_backend" {
   statement {
-    effect = "Allow"
-    actions = [
-      "s3:ListBucket"
-    ]
-    resources = [
-      "arn:aws:s3:::${var.tf_state_bucket}",
-      "arn:aws:s3:::${var.et_ai_lambda_function}"
-    ]
+    effect  = "Allow"
+    actions = ["s3:ListBucket"]
+    resources = ["arn:aws:s3:::${var.tf_state_bucket}",
+    "arn:aws:s3:::${var.et_ai_lambda_function}"]
   }
 
   statement {
-    effect = "Allow"
-    actions = [
-      "s3:GetObject",
-      "s3:PutObject",
-      "s3:DeleteObject"
-    ]
+    effect  = "Allow"
+    actions = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
     resources = [
       "arn:aws:s3:::${var.tf_state_bucket}/tf-state-deploy",
       "arn:aws:s3:::${var.tf_state_bucket}/tf-state-deploy/*",
@@ -38,7 +31,6 @@ data "aws_iam_policy_document" "tf_backend" {
       "arn:aws:s3:::${var.et_ai_lambda_function}/*"
     ]
   }
-
   statement {
     effect = "Allow"
     actions = [
@@ -62,11 +54,58 @@ resource "aws_iam_user_policy_attachment" "tf_backend" {
   policy_arn = aws_iam_policy.tf_backend.arn
 }
 
-#########################################
-# Combined deploy policy (Lambda/EC2/ECS/RDS/ELB)
-#########################################
+# ############################
+# # Policy for Lambda Access #
+# ############################
+
+# data "aws_iam_policy_document" "lambda" {
+#   statement {
+#     effect = "Allow"
+#     actions = [
+#       "lambda:CreateFunction",
+#       "lambda:UpdateFunctionCode",
+#       "lambda:UpdateFunctionConfiguration",
+#       "lambda:DeleteFunction",
+#       "lambda:GetFunction",
+#       "lambda:ListFunctions",
+#       "lambda:AddPermission",
+#       "lambda:RemovePermission",
+#       "lambda:InvokeFunction",
+#       "lambda:TagResource",
+#       "lambda:UntagResource",
+#       "lambda:ListTags",
+#       "lambda:ListVersionsByFunction",
+#       "lambda:ListVersionsByFunction",
+#       "lambda:GetFunctionCodeSigningConfig",
+#       "lambda:GetPolicy",
+#       "lambda:GetFunctionUrlConfig",
+#       "lambda:ListAliases"
+#     ]
+#     resources = ["*"]
+#   }
+
+#   # Optional: For managing Lambda permissions
+#   statement {
+#     effect = "Allow"
+#     actions = [
+#       "iam:PassRole"
+#     ]
+#     resources = ["arn:aws:iam::*:role/*"]
+#   }
+# }
+
+# resource "aws_iam_policy" "lambda" {
+#   name        = "${aws_iam_user.cd.name}-lambda"
+#   description = "Allow user to manage Lambda resources."
+#   policy      = data.aws_iam_policy_document.lambda.json
+# }
+
+# resource "aws_iam_user_policy_attachment" "lambda" {
+#   user       = aws_iam_user.cd.name
+#   policy_arn = aws_iam_policy.lambda.arn
+# }
+
 data "aws_iam_policy_document" "cd_deploy" {
-  # Lambda
   statement {
     sid    = "LambdaAccess"
     effect = "Allow"
@@ -99,7 +138,6 @@ data "aws_iam_policy_document" "cd_deploy" {
     resources = ["arn:aws:iam::*:role/*"]
   }
 
-  # EC2 (networking primitives used by your TF)
   statement {
     sid    = "EC2Access"
     effect = "Allow"
@@ -124,7 +162,6 @@ data "aws_iam_policy_document" "cd_deploy" {
       "ec2:DeleteRoute",
       "ec2:DescribePrefixLists",
       "ec2:DescribeSubnets",
-      "ec2:DescribeSecurityGroupRules",
       "ec2:DescribeVpcAttribute",
       "ec2:DescribeNetworkAcls",
       "ec2:AssociateRouteTable",
@@ -145,7 +182,6 @@ data "aws_iam_policy_document" "cd_deploy" {
     resources = ["*"]
   }
 
-  # ECS
   statement {
     sid    = "ECSAccess"
     effect = "Allow"
@@ -166,7 +202,6 @@ data "aws_iam_policy_document" "cd_deploy" {
     resources = ["*"]
   }
 
-  # RDS
   statement {
     sid    = "RDSAccess"
     effect = "Allow"
@@ -185,7 +220,6 @@ data "aws_iam_policy_document" "cd_deploy" {
     resources = ["*"]
   }
 
-  # ELB
   statement {
     sid    = "ELBAccess"
     effect = "Allow"
@@ -224,9 +258,12 @@ resource "aws_iam_user_policy_attachment" "cd_deploy" {
   policy_arn = aws_iam_policy.cd_deploy.arn
 }
 
-##################################
-# S3 administrative policy (buckets/objects)
-##################################
+
+
+#########################################################
+# Policy for S3 bucket access #
+#########################################################
+
 data "aws_iam_policy_document" "aws_s3_bucket" {
   statement {
     sid    = "S3BucketAdminForDeploy"
@@ -235,6 +272,7 @@ data "aws_iam_policy_document" "aws_s3_bucket" {
       "s3:*",
       "s3:DeleteBucket",
       "s3:ListAllMyBuckets",
+
 
       # bucket reads/writes Terraform does during create/read
       "s3:GetBucketLocation",
@@ -258,6 +296,7 @@ data "aws_iam_policy_document" "aws_s3_bucket" {
     resources = ["arn:aws:s3:::*"]
   }
 
+  # (Optional) object-level access if your TF also uploads/reads objects
   statement {
     sid    = "S3ObjectRWForDeploy"
     effect = "Allow"
@@ -283,9 +322,13 @@ resource "aws_iam_user_policy_attachment" "aws_s3_bucket" {
   policy_arn = aws_iam_policy.aws_s3_bucket.arn
 }
 
+
+
+
 ###############################
-# API Gateway administrative
+# Policy for API Gateway Access
 ###############################
+
 data "aws_iam_policy_document" "apigateway" {
   statement {
     effect = "Allow"
@@ -312,8 +355,10 @@ resource "aws_iam_user_policy_attachment" "apigateway" {
 }
 
 #########################
-# ECR push/pull policy
+# Policy for ECR access #
 #########################
+
+
 data "aws_iam_policy_document" "ecr" {
   statement {
     effect    = "Allow"
@@ -350,8 +395,9 @@ resource "aws_iam_user_policy_attachment" "ecr" {
 }
 
 #########################
-# EC2 (standalone policy) — kept for clarity
+# Policy for EC2 access #
 #########################
+
 data "aws_iam_policy_document" "ec2" {
   statement {
     effect = "Allow"
@@ -392,7 +438,7 @@ data "aws_iam_policy_document" "ec2" {
       "ec2:CreateInternetGateway",
       "ec2:AttachInternetGateway",
       "ec2:ModifyVpcAttribute",
-      "ec2:RevokeSecurityGroupIngress"
+      "ec2:RevokeSecurityGroupIngress",
     ]
     resources = ["*"]
   }
@@ -409,13 +455,208 @@ resource "aws_iam_user_policy_attachment" "ec2" {
   policy_arn = aws_iam_policy.ec2.arn
 }
 
+# #########################
+# # Policy for RDS access #
+# #########################
+
+# data "aws_iam_policy_document" "rds" {
+#   statement {
+#     effect = "Allow"
+#     actions = [
+#       "rds:DescribeDBSubnetGroups",
+#       "rds:DescribeDBInstances",
+#       "rds:CreateDBSubnetGroup",
+#       "rds:DeleteDBSubnetGroup",
+#       "rds:CreateDBInstance",
+#       "rds:DeleteDBInstance",
+#       "rds:ListTagsForResource",
+#       "rds:ModifyDBInstance",
+#       "rds:AddTagsToResource"
+#     ]
+#     resources = ["*"]
+#   }
+# }
+
+# resource "aws_iam_policy" "rds" {
+#   name        = "${aws_iam_user.cd.name}-rds"
+#   description = "Allow user to manage RDS resources."
+#   policy      = data.aws_iam_policy_document.rds.json
+# }
+
+# resource "aws_iam_user_policy_attachment" "rds" {
+#   user       = aws_iam_user.cd.name
+#   policy_arn = aws_iam_policy.rds.arn
+# }
+
+# #########################
+# # Policy for ECS access #
+# #########################
+
+# data "aws_iam_policy_document" "ecs" {
+#   statement {
+#     effect = "Allow"
+#     actions = [
+#       "ecs:DescribeClusters",
+#       "ecs:DeregisterTaskDefinition",
+#       "ecs:DeleteCluster",
+#       "ecs:DescribeServices",
+#       "ecs:UpdateService",
+#       "ecs:DeleteService",
+#       "ecs:DescribeTaskDefinition",
+#       "ecs:CreateService",
+#       "ecs:RegisterTaskDefinition",
+#       "ecs:CreateCluster",
+#       "ecs:UpdateCluster",
+#       "ecs:TagResource",
+#     ]
+#     resources = ["*"]
+#   }
+# }
+
+# resource "aws_iam_policy" "ecs" {
+#   name        = "${aws_iam_user.cd.name}-ecs"
+#   description = "Allow user to manage ECS resources."
+#   policy      = data.aws_iam_policy_document.ecs.json
+# }
+
+# resource "aws_iam_user_policy_attachment" "ecs" {
+#   user       = aws_iam_user.cd.name
+#   policy_arn = aws_iam_policy.ecs.arn
+# }
+
+# #########################
+# # Policy for IAM access #
+# #########################
+
+data "aws_iam_policy_document" "iam" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "iam:ListInstanceProfilesForRole",
+      "iam:ListAttachedRolePolicies",
+      "iam:DeleteRole",
+      "iam:ListPolicyVersions",
+      "iam:DeletePolicy",
+      "iam:DetachRolePolicy",
+      "iam:ListRolePolicies",
+      "iam:GetRole",
+      "iam:GetPolicyVersion",
+      "iam:GetPolicy",
+      "iam:CreateRole",
+      "iam:CreatePolicy",
+      "iam:AttachRolePolicy",
+      "iam:TagRole",
+      "iam:TagPolicy",
+      "iam:PassRole",
+      "iam:PutRolePolicy",
+      "iam:GetRolePolicy",
+      "iam:DeleteRolePolicy",
+    ]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "iam" {
+  name        = "${aws_iam_user.cd.name}-iam"
+  description = "Allow user to manage IAM resources."
+  policy      = data.aws_iam_policy_document.iam.json
+}
+
+resource "aws_iam_user_policy_attachment" "iam" {
+  user       = aws_iam_user.cd.name
+  policy_arn = aws_iam_policy.iam.arn
+}
+
+
+# ################################
+# # Policy for CloudWatch access #
+# ################################
+
+data "aws_iam_policy_document" "logs" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "logs:DeleteLogGroup",
+      "logs:DescribeLogStreams",
+      "logs:GetLogEvents",
+      "logs:FilterLogEvents",
+      "logs:DescribeLogGroups",
+      "logs:CreateLogGroup",
+      "logs:TagResource",
+      "logs:ListTagsForResource",
+      "logs:ListTagsLogGroup"
+    ]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "logs" {
+  name        = "${aws_iam_user.cd.name}-logs"
+  description = "Allow user to manage CloudWatch resources."
+  policy      = data.aws_iam_policy_document.logs.json
+}
+
+resource "aws_iam_user_policy_attachment" "logs" {
+  user       = aws_iam_user.cd.name
+  policy_arn = aws_iam_policy.logs.arn
+}
+
+# #########################
+# # Policy for ELB access #
+# #########################
+
+# data "aws_iam_policy_document" "elb" {
+#   statement {
+#     effect = "Allow"
+#     actions = [
+#       "elasticloadbalancing:DeleteLoadBalancer",
+#       "elasticloadbalancing:DeleteTargetGroup",
+#       "elasticloadbalancing:DeleteListener",
+#       "elasticloadbalancing:DescribeListeners",
+#       "elasticloadbalancing:DescribeListenerAttributes",
+#       "elasticloadbalancing:DescribeLoadBalancerAttributes",
+#       "elasticloadbalancing:DescribeTargetGroups",
+#       "elasticloadbalancing:DescribeTargetGroupAttributes",
+#       "elasticloadbalancing:DescribeLoadBalancers",
+#       "elasticloadbalancing:CreateListener",
+#       "elasticloadbalancing:SetSecurityGroups",
+#       "elasticloadbalancing:ModifyLoadBalancerAttributes",
+#       "elasticloadbalancing:CreateLoadBalancer",
+#       "elasticloadbalancing:ModifyTargetGroupAttributes",
+#       "elasticloadbalancing:CreateTargetGroup",
+#       "elasticloadbalancing:AddTags",
+#       "elasticloadbalancing:DescribeTags",
+#       "elasticloadbalancing:ModifyListener"
+#     ]
+#     resources = ["*"]
+#   }
+# }
+
+# resource "aws_iam_policy" "elb" {
+#   name        = "${aws_iam_user.cd.name}-elb"
+#   description = "Allow user to manage ELB resources."
+#   policy      = data.aws_iam_policy_document.elb.json
+# }
+
+# resource "aws_iam_user_policy_attachment" "elb" {
+#   user       = aws_iam_user.cd.name
+#   policy_arn = aws_iam_policy.elb.arn
+# }
+
 ########################################
-# Amplify minimal policy for CD user
+# Amplify permissions for CD IAM user  #
 ########################################
+
+# Minimal, least-privilege set for Amplify App + branches/domains/webhooks.
+# Notes:
+# - Some actions (e.g., ListApps) don't support resource-level ARNs and must use "*".
+# - Tagging actions must include all supported resource types (apps, branches, domains, webhooks).
+
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 data "aws_iam_policy_document" "amplify_min" {
+  # Actions that require specific resource ARNs
   statement {
     sid    = "AmplifyOnApp"
     effect = "Allow"
@@ -424,12 +665,13 @@ data "aws_iam_policy_document" "amplify_min" {
       "amplify:UpdateApp",
       "amplify:DeleteApp",
       "amplify:GetApp",
-      "amplify:GetArtifactUrl",
-      "amplify:GenerateAccessLogs",
+      "amplify:GetArtifactUrl",     # used by deployments
+      "amplify:GenerateAccessLogs", # optional but handy
       "amplify:ListResourcesForWebACL",
       "amplify:GetWebACLForResource",
       "amplify:AssociateWebACL",
       "amplify:DisassociateWebACL",
+      # Tagging on app resources
       "amplify:TagResource",
       "amplify:UntagResource",
       "amplify:ListTagsForResource"
@@ -468,6 +710,7 @@ data "aws_iam_policy_document" "amplify_min" {
       "amplify:GetWebHook",
       "amplify:ListWebHooks",
 
+      # Tagging across all supported resource types
       "amplify:TagResource",
       "amplify:UntagResource",
       "amplify:ListTagsForResource"
@@ -480,10 +723,13 @@ data "aws_iam_policy_document" "amplify_min" {
     ]
   }
 
+  # Actions that require "*" (no resource-level permission supported)
   statement {
-    sid       = "AmplifyListGlobal"
-    effect    = "Allow"
-    actions   = ["amplify:ListApps"]
+    sid    = "AmplifyListGlobal"
+    effect = "Allow"
+    actions = [
+      "amplify:ListApps"
+    ]
     resources = ["*"]
   }
 }
@@ -498,7 +744,6 @@ resource "aws_iam_user_policy" "cd_amplify_min_inline" {
   user   = aws_iam_user.cd.name
   policy = data.aws_iam_policy_document.amplify_min.json
 }
-
 ###############################################################
 # OpenSearch Serverless (AOSS) control-plane permissions (CI)
 ###############################################################
@@ -586,7 +831,3 @@ resource "aws_iam_user_policy_attachment" "cd_route53_for_aoss" {
   user       = aws_iam_user.cd.name
   policy_arn = aws_iam_policy.route53_for_aoss.arn
 }
-
-# OPTIONAL: If you move to a CMK for AOSS encryption, also grant KMS on that key
-# and ensure the key policy trusts the AOSS service role.
-# (example commented in previous messages)
