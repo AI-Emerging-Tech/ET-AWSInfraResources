@@ -24,3 +24,21 @@ resource "aws_iam_role_policy" "authorizer_ddb" {
   role   = aws_iam_role.iam-role.id
   policy = data.aws_iam_policy_document.authorizer_ddb.json
 }
+# AOSS Full Access Inline Policy
+data "aws_iam_policy_document" "aoss_full_access" {
+  statement {
+    sid    = "AossFullAccess"
+    effect = "Allow"
+    actions = [
+      "aoss:*", # All AOSS operations
+      "tag:*"   # Optional, if you want tagging capabilities too
+    ]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_role_policy" "aoss_full_inline" {
+  name   = "${var.prefix}-${terraform.workspace}-aoss-full-inline"
+  role   = aws_iam_role.aoss_full_role.id
+  policy = data.aws_iam_policy_document.aoss_full_access.json
+}
