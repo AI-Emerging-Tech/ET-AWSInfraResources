@@ -33,6 +33,8 @@ jobs:
           else
           echo "demo" > .workspace
           fi
+          echo "Workspace set to $(cat .workspace)"
+          echo "workspace=$(cat .workspace)" >> "$GITHUB_OUTPUT"
       - name: Push to ECR
         env: 
           AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
@@ -58,14 +60,16 @@ jobs:
           TF_VAR_collection_name: ${{ vars.COLLECTION_NAME }}
                   
         run: |
+          workspace="${{ steps.set_workspace.outputs.workspace }}"
+          echo "Using workspace: $workspace"
+          export TF_WORKSPACE="$workspace"
           export TF_VAR_ecr_app_image="${{ vars.ECR_REPO_APP }}:$GITHUB_SHA"
           export TF_VAR_ecr_proxy_image="${{ vars.ECR_REPO_PROXY }}:$GITHUB_SHA"
           export TF_VAR_ecr_tools_image="${{ vars.ECR_REPO_TOOLS }}:latest"
-          workspace=$(cat .workspace)
           cd infra/
-          docker compose run --rm terraform -chdir=deploy/ init
-          docker compose run --rm terraform -chdir=deploy/ workspace select -or-create $workspace
-          docker compose run --rm terraform -chdir=deploy/ apply -auto-approve
+          docker compose run -e TF_WORKSPACE --rm terraform -chdir=deploy/ init
+          docker compose run -e TF_WORKSPACE --rm terraform -chdir=deploy/ workspace select -or-create "TF_WORKSPACE"
+          docker compose run -e TF_WORKSPACE --rm terraform -chdir=deploy/ apply -auto-approve
 
 
 

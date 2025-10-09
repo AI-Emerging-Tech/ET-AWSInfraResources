@@ -78,11 +78,21 @@ output "collection_name" {
   value       = aws_opensearchserverless_collection.collection.name
   description = "OpenSearch Serverless collection name"
 }
-
 output "aoss_vpc_endpoint_id" {
-  value       = aws_opensearchserverless_vpc_endpoint.vpc_endpoint.id
-  description = "OpenSearch Serverless VPC endpoint ARN"
+  description = "The ID of the AOSS VPC Endpoint (only set in prod)"
+  value       = local.is_prod ? aws_opensearchserverless_vpc_endpoint.this[0].id : null
 }
+output "aoss_collection_endpoint" {
+  description = "The AOSS collection endpoint"
+  value       = aws_opensearchserverless_collection.collection.collection_endpoint
+}
+
+
+
+# output "aoss_vpc_endpoint_id" {
+#   value       = aws_opensearchserverless_vpc_endpoint.vpc_endpoint.id
+#   description = "OpenSearch Serverless VPC endpoint ARN"
+# }
 # output "function_arn" {
 #   value = module.lambda_function_container_image.lambda_function_arn
 # }
