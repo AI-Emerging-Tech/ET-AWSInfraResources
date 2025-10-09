@@ -109,6 +109,12 @@ variable "collection_name" {
   type        = string
   default     = "examplecollection"
 }
+# Optional scoping for AOSS (OpenSearch Serverless) — keep broad if you prefer
+variable "aoss_collection_name" {
+  description = "AOSS collection to target; leave empty to allow all via condition-less policy"
+  type        = string
+  default     = ""
+}
 # locals {
 #   # enforce AOSS naming rules without changing your input contract
 #   collection_name_sanitized = lower(replace(var.collection_name, "[^a-z0-9]", ""))
