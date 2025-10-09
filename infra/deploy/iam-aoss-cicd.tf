@@ -7,7 +7,7 @@ data "aws_iam_user" "devops_cd_user" {
 resource "aws_iam_policy" "aoss_tf_permissions" {
   name        = "vamet-${terraform.workspace}-aoss-terraform-permissions"
   description = "Permissions required by Terraform to manage OpenSearch Serverless (AOSS) resources"
-  policy      = jsonencode({
+  policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       # Tagging is required because the provider reads tags_all and you have default_tags enabled
