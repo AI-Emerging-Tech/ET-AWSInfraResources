@@ -25,6 +25,11 @@ jobs:
           TF_VAR_collection_name: ${{ vars.COLLECTION_NAME }}
         run: |
           export TF_WORKSPACE=${{ github.event.inputs.environment }}
+          echo "Destroying workspace: $TF_WORKSPACE"
           cd infra/
-          docker compose run --rm terraform -chdir=deploy/ init
-          docker compose run --rm terraform -chdir=deploy/ destroy -auto-approve
+          # Select the workspace (create if it somehow doesn't exist)
+          docker compose run -e TF_WORKSPACE --rm terraform -chdir=deploy/ workspace select "$TF_WORKSPACE" || \
+          docker compose run -e TF_WORKSPACE --rm terraform -chdir=deploy/ workspace new "$TF_WORKSPACE"
+
+          # Destroy
+          docker compose run -e TF_WORKSPACE --rm terraform -chdir=deploy/ destroy -auto-approve
