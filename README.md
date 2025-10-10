@@ -216,4 +216,3 @@ Letters (A–Z, a–z)
 Numbers (0–9)
 Special characters !#$%&()*+,-./:;<=>?@[]^_{|}~
 ❌ Cannot contain /, ", or @ at the beginning.
-❌ No spaces allowed testing opensearch
