@@ -22,14 +22,8 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           TF_VAR_cd_github_access_token:  ${{ secrets.TF_VAR_CD_GITHUB_ACCESS_TOKEN }}
-          TF_VAR_collection_name: ${{ vars.COLLECTION_NAME }}
         run: |
           export TF_WORKSPACE=${{ github.event.inputs.environment }}
-          echo "Destroying workspace: $TF_WORKSPACE"
           cd infra/
-          # Select the workspace (create if it somehow doesn't exist)
-          docker compose run -e TF_WORKSPACE --rm terraform -chdir=deploy/ workspace select "$TF_WORKSPACE" || \
-          docker compose run -e TF_WORKSPACE --rm terraform -chdir=deploy/ workspace new "$TF_WORKSPACE"
-
-          # Destroy
-          docker compose run -e TF_WORKSPACE --rm terraform -chdir=deploy/ destroy -auto-approve
+          docker compose run --rm terraform -chdir=deploy/ init
+          docker compose run --rm terraform -chdir=deploy/ destroy -auto-approve

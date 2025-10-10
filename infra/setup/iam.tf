@@ -744,45 +744,60 @@ resource "aws_iam_user_policy" "cd_amplify_min_inline" {
   user   = aws_iam_user.cd.name
   policy = data.aws_iam_policy_document.amplify_min.json
 }
-###############################################################
-# OpenSearch Serverless (AOSS) control-plane permissions (CI)
-###############################################################
+############################################################
+# OpenSearch Serverless (AOSS) — Control Plane (FIX HERE)  #
+# Includes LIST/GET permissions so refresh doesn't drop     #
+# the collection with "empty result".                      #
+############################################################
 data "aws_iam_policy_document" "aoss_control_plane" {
+  # Write/admin plane
   statement {
-    sid    = "AossReadList"
-    effect = "Allow"
-    actions = [
-      "aoss:ListCollections",
-      "aoss:GetCollection",
-      "aoss:BatchGetCollection",
-      "aoss:ListSecurityPolicies",
-      "aoss:GetSecurityPolicy",
-      "aoss:ListAccessPolicies",
-      "aoss:GetAccessPolicy",
-      "aoss:ListVpcEndpoints",
-      "aoss:BatchGetVpcEndpoint"
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    sid    = "AossWriteAdmin"
+    sid    = "AossWriteAdministrative"
     effect = "Allow"
     actions = [
       "aoss:CreateCollection",
       "aoss:UpdateCollection",
       "aoss:DeleteCollection",
+      "aoss:CreateVpcEndpoint",
+      "aoss:UpdateVpcEndpoint",
+      "aoss:DeleteVpcEndpoint",
       "aoss:CreateSecurityPolicy",
       "aoss:UpdateSecurityPolicy",
       "aoss:DeleteSecurityPolicy",
       "aoss:CreateAccessPolicy",
       "aoss:UpdateAccessPolicy",
       "aoss:DeleteAccessPolicy",
-      "aoss:CreateVpcEndpoint",
-      "aoss:UpdateVpcEndpoint",
-      "aoss:DeleteVpcEndpoint",
+      "aoss:UpdateAccountSettings",
+      "aoss:CreateLifecyclePolicy",
+      "aoss:UpdateLifecyclePolicy",
+      "aoss:DeleteLifecyclePolicy",
       "aoss:TagResource",
       "aoss:UntagResource"
+    ]
+    resources = ["*"]
+  }
+
+  # READ/LIST/DESCRIBE – this is essential for terraform refresh
+  statement {
+    sid    = "AossReadListDescribe"
+    effect = "Allow"
+    actions = [
+      "aoss:ListCollections",
+      "aoss:BatchGetCollection",
+      "aoss:ListAccessPolicies",
+      "aoss:GetAccessPolicy",
+      "aoss:ListSecurityPolicies",
+      "aoss:GetSecurityPolicy",
+      "aoss:GetPoliciesStats",
+      "aoss:GetAccountSettings",
+      "aoss:ListVpcEndpoints",
+      "aoss:BatchGetVpcEndpoint",
+      "aoss:ListLifecyclePolicies",
+      "aoss:BatchGetLifecyclePolicy",
+      "aoss:BatchGetEffectiveLifecyclePolicy",
+      "aoss:ListSecurityConfigs",
+      "aoss:GetSecurityConfig",
+      "aoss:ListTagsForResource"
     ]
     resources = ["*"]
   }
@@ -790,7 +805,7 @@ data "aws_iam_policy_document" "aoss_control_plane" {
 
 resource "aws_iam_policy" "aoss_control_plane" {
   name        = "${aws_iam_user.cd.name}-aoss-control-plane"
-  description = "Control-plane permissions for provisioning AOSS collections, policies, and VPC endpoints"
+  description = "Provisioning permissions for Amazon OpenSearch Serverless."
   policy      = data.aws_iam_policy_document.aoss_control_plane.json
 }
 
@@ -799,14 +814,17 @@ resource "aws_iam_user_policy_attachment" "cd_aoss_control_plane" {
   policy_arn = aws_iam_policy.aoss_control_plane.arn
 }
 
-###############################################################
-# Route53 permissions for AOSS VPCE private DNS (SINGLE COPY)
-###############################################################
+#########################################################
+# Route53 permissions needed when creating AOSS VPCE    #
+# (private DNS hosted zone lifecycle)                   #
+#########################################################
 data "aws_iam_policy_document" "route53_for_aoss" {
   statement {
-    sid    = "Route53PrivateDNSForAoss"
+    sid    = "AllowAossHostedZoneLifecycle"
     effect = "Allow"
     actions = [
+      "route53:CreateHostedZone",
+      "route53:DeleteHostedZone",
       "route53:ChangeResourceRecordSets",
       "route53:GetHostedZone",
       "route53:GetChange",
