@@ -1,142 +1,110 @@
-############################
-# OpenSearch Serverless
-############################
+########################################
+# OpenSearch Serverless (AOSS) - Secure
+########################################
 
-# Workspace-aware toggles (same pattern you use elsewhere)
-locals {
-  is_prod = terraform.workspace == "prod"
 
-  # AOSS collection name must be [a-z0-9]{3,40}
-  collection_name_lower = lower(var.collection_name)
-
-  # Instead of regexreplace(), use regexall()+join() to keep only allowed chars.
-  # This avoids the "unknown function regexreplace" parser error you've seen.
-  collection_name_chars     = regexall("[a-z0-9]", local.collection_name_lower)
-  collection_name_sanitized = join("", local.collection_name_chars)
-}
-
-# Validate final name (prevents "" or illegal lengths)
+# --- Name guardrails (keep your variable contract; enforce constraints) ---
 resource "null_resource" "validate_collection_name" {
   triggers = { name = local.collection_name_sanitized }
-
   lifecycle {
     precondition {
       condition     = length(local.collection_name_sanitized) >= 3 && length(local.collection_name_sanitized) <= 40
-      error_message = "collection_name must be 3..40 chars after sanitization (a-z0-9 only)."
-    }
-    precondition {
-      condition     = can(regex("^[a-z0-9]+$", local.collection_name_sanitized))
-      error_message = "collection_name must match ^[a-z0-9]+$ after sanitization."
+      error_message = "collection_name must be 3..40 chars, a-z0-9 only."
     }
   }
 }
 
-
-
-locals {
-  aoss_admin_principals = compact([
-    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root",
-    try(aws_iam_role.task_execution_role.arn, null), # ecs.tf
-    try(aws_iam_role.app_task.arn, null),            # ecs.tf
-    try(aws_iam_role.iam-role.arn, null),            # iam-role.tf  (note: resource name has a dash)
-  ])
-}
-
-# --- Security Policies ---
-
-# 1) ENCRYPTION policy (AWS managed KMS key; create FIRST)
-resource "aws_opensearchserverless_security_policy" "encryption" {
-  name = "${local.collection_name_sanitized}-encryption"
-  type = "encryption"
+# Encryption policy (AWS owned key)
+resource "aws_opensearchserverless_security_policy" "encryption_policy" {
+  name        = "example-encryption-policy"
+  type        = "encryption"
+  description = "encryption policy for ${local.collection_name_sanitized}"
 
   policy = jsonencode({
-    AWSOwnedKey = true
-    Rules = [{
-      ResourceType = "collection"
-      Resource     = ["collection/${local.collection_name_sanitized}"]
-    }]
-  })
-
-  depends_on = [null_resource.validate_collection_name]
-}
-
-# 2a) DEV/DEMO: Public network (no Route53)
-resource "aws_opensearchserverless_security_policy" "network_public" {
-  count = local.is_prod ? 0 : 1
-  name  = "${local.collection_name_sanitized}-network"
-  type  = "network"
-
-  policy = jsonencode([{
-    Description     = "Public network policy for demo/dev (IAM auth still required)"
-    AllowFromPublic = true
     Rules = [
-      { ResourceType = "collection", Resource = ["collection/${local.collection_name_sanitized}"] },
-      { ResourceType = "dashboard", Resource = ["collection/${local.collection_name_sanitized}"] }
+      {
+        Resource     = ["collection/${local.collection_name_sanitized}"]
+        ResourceType = "collection"
+      }
     ]
-  }])
-
-  depends_on = [null_resource.validate_collection_name]
+    AWSOwnedKey = true
+  })
 }
 
-# 2b) PROD: Private via VPCE (AWS creates private hosted zones internally)
-resource "aws_opensearchserverless_vpc_endpoint" "this" {
-  count              = local.is_prod ? 1 : 0
+# VPC endpoint for AOSS (ENIs in PRIVATE subnets; SG from network.tf)
+resource "aws_opensearchserverless_vpc_endpoint" "vpc_endpoint" {
   name               = "${local.collection_name_sanitized}-aoss-vpce"
   vpc_id             = aws_vpc.main.id
   subnet_ids         = [aws_subnet.private_a.id, aws_subnet.private_b.id]
   security_group_ids = [aws_security_group.endpoint_access.id]
 }
 
-resource "aws_opensearchserverless_security_policy" "network_private" {
-  count = local.is_prod ? 1 : 0
-  name  = "${local.collection_name_sanitized}-network"
-  type  = "network"
+# Network policy:
+# - VPC-only access for the collection endpoint (via the above VPCE)
+# - Public access for Dashboards tied to the collection
+resource "aws_opensearchserverless_security_policy" "network_policy" {
+  name        = "example-network-policy"
+  type        = "network"
+  description = "public access for dashboards, VPC access for collection endpoint"
 
-  policy = jsonencode([{
-    Description     = "Private network policy via AOSS VPCE (prod)"
-    AllowFromPublic = false
-    SourceVPCEs     = [aws_opensearchserverless_vpc_endpoint.this[0].id]
-    Rules = [
-      { ResourceType = "collection", Resource = ["collection/${local.collection_name_sanitized}"] },
-      { ResourceType = "dashboard", Resource = ["collection/${local.collection_name_sanitized}"] }
-    ]
-  }])
+  policy = jsonencode([
+    {
+      Description = "VPC access for collection endpoint"
+      Rules = [
+        { ResourceType = "collection", Resource = ["collection/${local.collection_name_sanitized}"] }
+      ]
+      AllowFromPublic = false
+      SourceVPCEs     = [aws_opensearchserverless_vpc_endpoint.vpc_endpoint.id]
+    },
+    {
+      Description = "Public access for dashboards"
+      Rules = [
+        # 'dashboard' Rules are associated with collections
+        { ResourceType = "dashboard", Resource = ["collection/${local.collection_name_sanitized}"] }
+      ]
+      AllowFromPublic = true
+    }
+  ])
 
-  depends_on = [aws_opensearchserverless_vpc_endpoint.this]
+  depends_on = [aws_opensearchserverless_vpc_endpoint.vpc_endpoint]
 }
 
-# 3) DATA/DASHBOARD access policy — principals built locally (no GA inputs)
-resource "aws_opensearchserverless_access_policy" "data_access" {
-  name        = "${local.collection_name_sanitized}-data-access"
-  type        = "data"
-  description = "Allow index and dashboard access for the collection"
-
-  policy = jsonencode([{
-    Rules = [
-      { ResourceType = "index", Resource = ["index/${local.collection_name_sanitized}/*"], Permission = ["aoss:*"] },
-      { ResourceType = "collection", Resource = ["collection/${local.collection_name_sanitized}"], Permission = ["aoss:*"] }
-    ],
-    Principal = local.aoss_admin_principals
-  }])
-
-  # Static list (Terraform requires static depends_on)
-  depends_on = [
-    aws_opensearchserverless_security_policy.encryption,
-    aws_opensearchserverless_security_policy.network_public,
-    aws_opensearchserverless_security_policy.network_private,
-  ]
-}
-
-# 4) The collection itself
+# Collection (VECTORSEARCH) — create only after both policies exist
 resource "aws_opensearchserverless_collection" "collection" {
   name = local.collection_name_sanitized
   type = "VECTORSEARCH"
-
-  # Ensure the policies exist before creating the collection
   depends_on = [
-    aws_opensearchserverless_security_policy.encryption,
-    aws_opensearchserverless_access_policy.data_access,
-    aws_opensearchserverless_security_policy.network_public,
-    aws_opensearchserverless_security_policy.network_private,
+    aws_opensearchserverless_security_policy.encryption_policy,
+    aws_opensearchserverless_security_policy.network_policy
   ]
+}
+
+# Data Access Policy — use created collection name, keep your principal pattern
+resource "aws_opensearchserverless_access_policy" "data_access_policy" {
+  name        = "example-data-access-policy"
+  type        = "data"
+  description = "allow index and collection access"
+
+  policy = jsonencode([
+    {
+      Rules = [
+        {
+          ResourceType = "index"
+          Resource     = ["index/${aws_opensearchserverless_collection.collection.name}/*"]
+          Permission   = ["aoss:*"]
+        },
+        {
+          ResourceType = "collection"
+          Resource     = ["collection/${aws_opensearchserverless_collection.collection.name}"]
+          Permission   = ["aoss:*"]
+        }
+      ]
+      Principal = [
+        # Keep your CD runner identity; add more ARNs (roles/users) if needed
+        data.aws_caller_identity.current.arn
+      ]
+    }
+  ])
+
+  depends_on = [aws_opensearchserverless_collection.collection]
 }

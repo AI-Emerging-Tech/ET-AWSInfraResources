@@ -100,26 +100,26 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
-#############################################
-# OpenSearch Serverless (vector) parameters #
-#############################################
-
 variable "collection_name" {
   description = "Name of the OpenSearch Serverless collection."
-  type        = string
   default     = "examplecollection"
 }
-# Optional scoping for AOSS (OpenSearch Serverless) — keep broad if you prefer
-variable "aoss_collection_name" {
-  description = "AOSS collection to target; leave empty to allow all via condition-less policy"
+# EC2 instance role that your app runs under; leave empty if you only call from the CD user
+variable "ec2_instance_role_name" {
+  description = "Name of the EC2 instance IAM role that runs the app (used in AOSS data policy)"
   type        = string
   default     = ""
 }
-# locals {
-#   # enforce AOSS naming rules without changing your input contract
-#   collection_name_sanitized = lower(replace(var.collection_name, "[^a-z0-9]", ""))
-# }
 
+locals {
+  # Enforce AOSS naming constraints without changing your input variable contract
+  collection_name_sanitized = lower(replace(var.collection_name, "[^a-z0-9]", ""))
+}
+# locals {
+#   aoss_principals = (length(var.aoss_allowed_principals) > 0)
+#     ? var.aoss_allowed_principals
+#     : [data.aws_caller_identity.current.arn]
+# }
 
 # variable "domain_name" {
 #   type        = string
