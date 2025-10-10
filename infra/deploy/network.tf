@@ -233,12 +233,9 @@ resource "aws_vpc_endpoint" "s3" {
   vpc_id            = aws_vpc.main.id
   service_name      = "com.amazonaws.${data.aws_region.current.id}.s3"
   vpc_endpoint_type = "Gateway"
-  # attach to the private route tables actually used by your private subnets
   route_table_ids = [
-    aws_route_table.private_a.id,
-    aws_route_table.private_b.id
+    aws_vpc.main.default_route_table_id
   ]
-
   tags = {
     Name = "${local.prefix}-s3-endpoint"
   }
